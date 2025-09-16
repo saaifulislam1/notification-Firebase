@@ -30,27 +30,25 @@ export default function ShopPage() {
 
     toast.success(`✅ Order placed for ${product.name}`);
 
-    try {
-      const res = await fetch("/api/notify", {
-        method: "POST",
-        body: JSON.stringify({
-          token: fcmToken,
-          title: "Order Placed",
-          body: `Your order for ${product.name} was successful!`,
-        }),
-        headers: { "Content-Type": "application/json" },
-      });
+    // Delay 15 seconds
+    setTimeout(async () => {
+      try {
+        const res = await fetch("/api/notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token: fcmToken,
+            title: "Order Reminder",
+            body: `Your order for ${product.name} was successful!`,
+          }),
+        });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Notification failed");
+        const data = await res.json();
+        console.log("Notification sent:", data);
+      } catch (err) {
+        console.error("Error sending notification:", err);
       }
-
-      console.log("🔔 Notification sent:", data);
-    } catch (err) {
-      console.error("❌ Error sending notification:", err);
-      toast.error("Failed to send notification");
-    }
+    }, 15000); // 15000ms = 15s
   }
 
   return (
