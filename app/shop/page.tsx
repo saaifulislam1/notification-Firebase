@@ -1,33 +1,93 @@
 "use client";
-import ProductCard from "@/components/ProductCard";
-import { useAuth } from "@/components/AuthProvider";
-import { useRouter } from "next/navigation";
+
+import { useAuth } from "@/lib/authContext";
 import { useEffect } from "react";
+import toast from "react-hot-toast";
+import { onMessageListener } from "@/lib/firebaseClient";
 
 const products = [
-  { id: 1, name: "Notebook", price: "$5" },
-  { id: 2, name: "Pen Set", price: "$3" },
-  { id: 3, name: "Desk Lamp", price: "$15" },
-  { id: 4, name: "Backpack", price: "$25" },
+  { id: "1", name: "Laptop", price: 1200 },
+  { id: "2", name: "Phone", price: 800 },
+  { id: "3", name: "Headphones", price: 200 },
 ];
 
 export default function ShopPage() {
-  const { user } = useAuth();
-  const router = useRouter();
+  const { user, login, logout, fcmToken } = useAuth();
 
   useEffect(() => {
-    if (!user) {
-      router.push("/");
+    onMessageListener().then((payload: any) => {
+      if (payload?.notification) {
+        toast.success(
+          `🔔 ${payload.notification.title}: ${payload.notification.body}`
+        );
+      }
+    });
+  }, []);
+
+  async function handleOrder(product: { id: string; name: string }) {
+    if (!user) return toast.error("Please log in first");
+    if (!fcmToken) return toast.error("No FCM token");
+
+    toast.success(`✅ Order placed for ${product.name}`);
+
+    try {
+      const res = await fetch("/api/notify", {
+        method: "POST",
+        body: JSON.stringify({
+          token: fcmToken,
+          title: "Order Placed",
+          body: `Your order for ${product.name} was successful!`,
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Notification failed");
+      }
+
+      console.log("🔔 Notification sent:", data);
+    } catch (err) {
+      console.error("❌ Error sending notification:", err);
+      toast.error("Failed to send notification");
     }
-  }, [user, router]);
-  console.log(user, "user");
+  }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">Shop</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className="p-6 space-y-4">
+      <h1 className="text-2xl font-bold">Shop</h1>
+
+      {!user ? (
+        <button
+          onClick={() => login("Demo User")}
+          className="bg-green-600 text-white px-4 py-2 rounded"
+        >
+          Login as Demo User
+        </button>
+      ) : (
+        <div className="flex items-center gap-4">
+          <span>👋 Welcome, {user.name}</span>
+          <button
+            onClick={logout}
+            className="bg-red-500 text-white px-3 py-1 rounded"
+          >
+            Logout
+          </button>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {products.map((p) => (
-          <ProductCard key={p.id} product={p} />
+          <div key={p.id} className="border p-4 rounded shadow">
+            <h2 className="text-lg font-semibold">{p.name}</h2>
+            <p className="text-gray-600">${p.price}</p>
+            <button
+              onClick={() => handleOrder(p)}
+              className="mt-2 bg-blue-600 text-white px-3 py-1 rounded"
+            >
+              Order
+            </button>
+          </div>
         ))}
       </div>
     </div>

@@ -1,12 +1,6 @@
-import "./globals.css";
+import { AuthProvider } from "@/lib/authContext";
 import { Toaster } from "react-hot-toast";
-import Navbar from "../components/Navbar";
-import { AuthProvider } from "@/components/AuthProvider";
-
-export const metadata = {
-  title: "Minimal Task App",
-  description: "Simple multi-user task + shop app",
-};
+import "./globals.css";
 
 export default function RootLayout({
   children,
@@ -15,10 +9,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-gray-50 text-gray-900">
+      <body>
         <AuthProvider>
-          <Navbar />
-          <main className="max-w-3xl mx-auto p-6">{children}</main>
+          {children}
           <Toaster position="top-right" />
         </AuthProvider>
       </body>
