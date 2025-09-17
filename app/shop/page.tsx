@@ -20,7 +20,7 @@ function ShopPageInner() {
   useEffect(() => {
     onMessageListener()
       .then((payload: any) => {
-        if (document.visibilityState === "visible" && payload?.notification) {
+        if (payload?.notification) {
           toast.success(
             `🔔 ${payload.notification.title}: ${payload.notification.body}`
           );

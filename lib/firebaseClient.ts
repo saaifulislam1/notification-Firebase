@@ -16,8 +16,17 @@ const firebaseConfig = {
   appId: "1:481890140409:web:77f8f39f5f5a68ce4de228",
 };
 
-const app = initializeApp(firebaseConfig);
-const messaging = getMessaging(app);
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+
+// Only initialize messaging in the browser
+let messaging: ReturnType<typeof getMessaging> | null = null;
+if (typeof window !== "undefined") {
+  try {
+    messaging = getMessaging(app);
+  } catch (err) {
+    console.warn("Firebase messaging not supported:", err);
+  }
+}
 
 export const requestForToken = async () => {
   try {
@@ -35,7 +44,7 @@ export const requestForToken = async () => {
     }
 
     console.log("✅ Permission granted, fetching FCM token...");
-    const currentToken = await getToken(messaging, { vapidKey });
+    const currentToken = await getToken(messaging!, { vapidKey });
     if (currentToken) {
       console.log("✅ FCM token retrieved:", currentToken);
       return currentToken;
@@ -51,16 +60,8 @@ export const requestForToken = async () => {
 
 export const onMessageListener = () =>
   new Promise((resolve) => {
-    onMessage(messaging, (payload) => {
+    onMessage(messaging!, (payload) => {
       console.log("🔔 Foreground message received:", payload);
-
-      // Show desktop notification for foreground messages
-      // if (Notification.permission === "granted") {
-      //   const title = payload.notification?.title || "Notification";
-      //   const body = payload.notification?.body || "";
-      //   new Notification(title, { body });
-      // }
-
       resolve(payload);
     });
   });
