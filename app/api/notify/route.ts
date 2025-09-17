@@ -29,19 +29,17 @@ export async function POST(req: NextRequest) {
     //   }
     // }, (delaySeconds || 0) * 1000);
 
-    setTimeout(async () => {
-      try {
-        await admin.messaging().send({
-          token,
-          notification: { title, body },
-          android: { notification: { tag: "order-notification" } },
-          apns: { payload: { aps: { "thread-id": "order-notification" } } },
-        });
-        console.log("Notification sent:", title, body);
-      } catch (err) {
-        console.error("FCM send error:", err);
-      }
-    }, delaySeconds * 1000);
+    try {
+      await admin.messaging().send({
+        token,
+        notification: { title, body },
+        android: { notification: { tag: "order-notification" } },
+        apns: { payload: { aps: { "thread-id": "order-notification" } } },
+      });
+      console.log("Notification sent:", title, body);
+    } catch (err) {
+      console.error("FCM send error:", err);
+    }
 
     return NextResponse.json({ success: true, scheduled: true });
   } catch (err) {
