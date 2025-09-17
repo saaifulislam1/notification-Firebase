@@ -19,22 +19,12 @@ export async function POST(req: NextRequest) {
 
     console.log(`⏳ Scheduling notification in ${delaySeconds || 0}s`);
 
-    // setTimeout(async () => {
-    //   try {
-    //     const message = { token, notification: { title, body } };
-    //     const response = await admin.messaging().send(message);
-    //     console.log("✅ Notification sent:", response);
-    //   } catch (err) {
-    //     console.error("❌ Failed to send notification:", err);
-    //   }
-    // }, (delaySeconds || 0) * 1000);
-
     try {
       await admin.messaging().send({
         token,
         notification: { title, body },
-        android: { notification: { tag: "order-notification" } },
-        apns: { payload: { aps: { "thread-id": "order-notification" } } },
+        // android: { notification: { tag: "order-notification" } },
+        // apns: { payload: { aps: { "thread-id": "order-notification" } } },
       });
       console.log("Notification sent:", title, body);
     } catch (err) {
