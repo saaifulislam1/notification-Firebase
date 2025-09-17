@@ -53,6 +53,7 @@ export const requestForToken = async () => {
 
     if (token) {
       console.log("✅ FCM token retrieved successfully:", token);
+      console.log(vapidKey, "vapid key");
       return token;
     } else {
       console.error(
