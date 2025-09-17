@@ -3,7 +3,6 @@ import "./globals.css";
 import { ReactNode } from "react";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "@/lib/authContext";
-import Navbar from "@/components/Navbar";
 
 export const metadata = {
   title: "Shop Demo",
