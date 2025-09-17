@@ -15,16 +15,15 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 export let messaging: ReturnType<typeof getMessaging> | null = null;
 
 if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-  try {
-    messaging = getMessaging(app);
-    console.log("🛠 Firebase messaging initialized");
-  } catch (err) {
-    console.warn("⚠️ Firebase messaging not supported:", err);
-  }
-} else {
-  console.warn(
-    "⚠️ Firebase messaging skipped (not supported in this environment)"
-  );
+  navigator.serviceWorker
+    .register("/firebase-messaging-sw.js")
+    .then((registration) => {
+      console.log("✅ Service Worker registered:", registration);
+      messaging = getMessaging(app);
+    })
+    .catch((err) => {
+      console.error("❌ Service Worker registration failed:", err);
+    });
 }
 
 // Request FCM token
@@ -58,7 +57,7 @@ export const requestForToken = async () => {
     return null;
   }
 };
-
+// trigger
 // Foreground message listener
 export const onMessageListener = () =>
   new Promise((resolve) => {
