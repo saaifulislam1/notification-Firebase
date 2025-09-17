@@ -57,7 +57,7 @@ export const requestForToken = async () => {
     return null;
   }
 };
-
+// trigger
 // Foreground message listener
 export const onMessageListener = () =>
   new Promise((resolve) => {
