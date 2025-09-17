@@ -1,78 +1,101 @@
 // lib/firebaseClient.ts
 import { initializeApp, getApps } from "firebase/app";
-import { getMessaging, getToken, onMessage } from "firebase/messaging";
+import {
+  getMessaging,
+  getToken,
+  onMessage,
+  Messaging,
+} from "firebase/messaging";
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET!,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
+  apiKey: "AIzaSyDMEzuwcww_pVJNhPKixC2crDKRr-NXdSQ",
+  authDomain: "notification-app-78acb.firebaseapp.com",
+  projectId: "notification-app-78acb",
+  storageBucket: "notification-app-78acb.firebasestorage.app",
+  messagingSenderId: "481890140409",
+  appId: "1:481890140409:web:77f8f39f5f5a68ce4de228",
 };
 
-console.log("🔥 Firebase config loaded:", firebaseConfig);
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+let messaging: Messaging | null = null;
 
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+  try {
+    messaging = getMessaging(app);
 
-export const messaging =
-  typeof window !== "undefined" ? getMessaging(app) : null;
+    // 🔹 Register the service worker
+    navigator.serviceWorker
+      .register("/firebase-messaging-sw.js")
+      .then((registration) => {
+        console.log("🛠 Service Worker registered:", registration);
 
-export async function requestForToken() {
+        // ✅ Request token after registration
+        requestForToken(registration);
+      })
+      .catch((err) => {
+        console.error("❌ Service Worker registration failed:", err);
+      });
+  } catch (err) {
+    console.error("🔥 Error initializing Firebase Messaging:", err);
+  }
+}
+
+// 🔹 Request Notification Permission + Get Token
+export const requestForToken = async (
+  registration?: ServiceWorkerRegistration
+) => {
   if (!messaging) {
-    console.error("❌ Messaging not available (window undefined or no app)");
+    console.warn("⚠️ Messaging not initialized yet.");
     return null;
   }
 
   try {
-    console.log(
-      "🔔 Current Notification.permission =",
-      Notification.permission
-    );
+    console.log("🔔 Requesting notification permission...");
+    const permission = await Notification.requestPermission();
 
-    if (Notification.permission !== "granted") {
-      const permission = await Notification.requestPermission();
-      console.log("🔔 User responded with permission:", permission);
-      if (permission !== "granted") {
-        return null;
-      }
+    if (permission !== "granted") {
+      console.warn("🚫 Permission not granted for notifications");
+      return null;
     }
 
-    const registration = await navigator.serviceWorker.register(
-      "/firebase-messaging-sw.js"
-    );
-    console.log("🛠 Service Worker registered:", registration);
+    console.log("✅ Permission granted, fetching token...");
 
-    const vapidKey = process.env.NEXT_PUBLIC_VAPID_KEY!;
-    console.log("🔑 Using VAPID key:", vapidKey);
+    const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+    if (!vapidKey) {
+      console.error("❌ No VAPID key provided in env.");
+      return null;
+    }
 
     const token = await getToken(messaging, {
       vapidKey,
       serviceWorkerRegistration: registration,
     });
 
-    if (!token) {
-      console.warn("⚠️ getToken returned null (no FCM token)");
+    if (token) {
+      console.log("🎯 FCM Token retrieved:", token);
+      return token;
+    } else {
+      console.warn(
+        "⚠️ No registration token available. Request permission to generate one."
+      );
       return null;
     }
-
-    console.log("✅ FCM Token retrieved:", token);
-    return token;
   } catch (err) {
     console.error("❌ Error retrieving FCM token:", err);
     return null;
   }
-}
+};
 
-export function onMessageListener() {
-  return new Promise((resolve) => {
+// 🔹 Foreground message listener
+export const onMessageListener = () =>
+  new Promise((resolve) => {
     if (!messaging) {
-      console.warn("⚠️ Messaging not initialized for onMessageListener");
+      console.warn("⚠️ Messaging not initialized for foreground messages.");
       return;
     }
+
     onMessage(messaging, (payload) => {
-      console.log("📩 Foreground FCM message received:", payload);
+      console.log("📩 Foreground message received:", payload);
       resolve(payload);
     });
   });
-}

@@ -1,7 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// app/shop/page.tsx
 "use client";
 
+import React, { useEffect } from "react";
+import AuthGuard from "@/components/AuthGuard";
 import { useAuth } from "@/lib/authContext";
-import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { onMessageListener } from "@/lib/firebaseClient";
 
@@ -11,60 +14,64 @@ const products = [
   { id: "3", name: "Headphones", price: 200 },
 ];
 
-export default function ShopPage() {
-  const { user, login, logout, fcmToken } = useAuth();
+function ShopPageInner() {
+  const { user, fcmToken, logout } = useAuth();
 
+  // Foreground message handler → show toast
   useEffect(() => {
-    onMessageListener().then((payload: any) => {
-      if (payload?.notification) {
-        toast.success(
-          `🔔 ${payload.notification.title}: ${payload.notification.body}`
-        );
-      }
-    });
+    onMessageListener()
+      .then((payload: any) => {
+        if (payload?.notification) {
+          toast.success(
+            `🔔 ${payload.notification.title}: ${payload.notification.body}`
+          );
+        }
+      })
+      .catch((e) => {
+        console.warn("onMessageListener setup failed:", e);
+      });
   }, []);
 
   async function handleOrder(product: { id: string; name: string }) {
-    if (!user) return toast.error("Please log in first");
-    if (!fcmToken) return toast.error("No FCM token");
+    if (!user) return toast.error("Please log in");
+    if (!fcmToken)
+      return toast.error("FCM token not available (check browser)");
 
     toast.success(`✅ Order placed for ${product.name}`);
 
-    // Delay 15 seconds
-    setTimeout(async () => {
-      try {
-        const res = await fetch("/api/notify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            token: fcmToken,
-            title: "Order Reminder",
-            body: `Your order for ${product.name} was successful!`,
-          }),
-        });
+    try {
+      const res = await fetch("/api/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: fcmToken,
+          title: "Order Confirmed",
+          body: `Dear ${user.name}, you have ordered ${product.name}`,
+          delaySeconds: 3,
+        }),
+      });
 
-        const data = await res.json();
-        console.log("Notification sent:", data);
-      } catch (err) {
-        console.error("Error sending notification:", err);
+      const data = await res.json();
+      if (!res.ok) {
+        console.error("Server notify error:", data);
+        toast.error("Failed to schedule notification");
+      } else {
+        console.log("Notification scheduled:", data);
       }
-    }, 15000); // 15000ms = 15s
+    } catch (err) {
+      console.error("Notify request error:", err);
+      toast.error("Failed to schedule notification");
+    }
   }
+
+  if (!user) return null;
 
   return (
     <div className="p-6 space-y-4">
-      <h1 className="text-2xl font-bold">Shop</h1>
-
-      {!user ? (
-        <button
-          onClick={() => login("Demo User")}
-          className="bg-green-600 text-white px-4 py-2 rounded"
-        >
-          Login as Demo User
-        </button>
-      ) : (
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Shop</h1>
         <div className="flex items-center gap-4">
-          <span>👋 Welcome, {user.name}</span>
+          <span>👋 {user.name}</span>
           <button
             onClick={logout}
             className="bg-red-500 text-white px-3 py-1 rounded"
@@ -72,7 +79,7 @@ export default function ShopPage() {
             Logout
           </button>
         </div>
-      )}
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {products.map((p) => (
@@ -89,5 +96,14 @@ export default function ShopPage() {
         ))}
       </div>
     </div>
+  );
+}
+
+// ✅ Single default export with AuthGuard wrapper
+export default function ShopPage() {
+  return (
+    <AuthGuard>
+      <ShopPageInner />
+    </AuthGuard>
   );
 }

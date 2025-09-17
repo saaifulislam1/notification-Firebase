@@ -1,6 +1,6 @@
 export const users = [
-  { email: "alice@example.com", password: "alice123" },
-  { email: "bob@example.com", password: "bob123" },
-  { email: "carol@example.com", password: "carol123" },
-  { email: "dave@example.com", password: "dave123" },
+  { email: "saifulislam.uiu2@gmail.com", name: "Saiful", password: "123" },
+  { email: "bob@example.com", name: "bob", password: "123" },
+  { email: "carol@example.com", name: "crol", password: "123" },
+  { email: "dave@example.com", name: "dave", password: "123" },
 ];

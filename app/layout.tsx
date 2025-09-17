@@ -1,18 +1,22 @@
-import { AuthProvider } from "@/lib/authContext";
-import { Toaster } from "react-hot-toast";
+// app/layout.tsx
 import "./globals.css";
+import { ReactNode } from "react";
+import { Toaster } from "react-hot-toast";
+import { AuthProvider } from "@/lib/authContext";
+import Navbar from "@/components/Navbar";
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export const metadata = {
+  title: "Shop Demo",
+};
+
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
         <AuthProvider>
-          {children}
           <Toaster position="top-right" />
+
+          {children}
         </AuthProvider>
       </body>
     </html>

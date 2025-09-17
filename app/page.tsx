@@ -1,56 +1,56 @@
+// app/page.tsx
 "use client";
-import { useState, useEffect } from "react";
-import { useAuth } from "@/components/AuthProvider";
+
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
+import { useAuth } from "@/lib/authContext";
 
 export default function LoginPage() {
-  const { login, user } = useAuth();
+  const { login } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [err, setErr] = useState("");
 
-  // Redirect if already logged in
-  useEffect(() => {
-    if (user) {
-      router.push("/tasks");
-    }
-  }, [user, router]);
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(email, password)) {
-      toast.success("Login successful");
-      router.push("/tasks");
+    const ok = login(email.trim(), password);
+    if (ok) {
+      router.push("/shop");
     } else {
-      toast.error("Invalid credentials");
+      setErr("Invalid credentials");
     }
   };
 
   return (
-    <div className="flex flex-col items-center mt-20">
-      <h1 className="text-2xl font-bold mb-6">Login</h1>
-      <form onSubmit={handleSubmit} className="space-y-4 w-72">
+    <div className="flex min-h-screen items-center justify-center p-6">
+      <form
+        onSubmit={submit}
+        className="w-full max-w-sm border p-6 rounded shadow"
+      >
+        <h1 className="text-xl font-bold mb-4">Login</h1>
+
         <input
           type="email"
           placeholder="Email"
-          className="w-full border p-2 rounded"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          className="w-full border px-3 py-2 rounded mb-3"
+          required
         />
         <input
           type="password"
           placeholder="Password"
-          className="w-full border p-2 rounded"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          className="w-full border px-3 py-2 rounded mb-3"
+          required
         />
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
-        >
+
+        <button className="w-full bg-blue-600 text-white py-2 rounded">
           Login
         </button>
+        {err && <p className="text-red-500 mt-2">{err}</p>}
       </form>
     </div>
   );
