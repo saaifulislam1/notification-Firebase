@@ -1,7 +1,5 @@
-// lib/authContext.tsx
 "use client";
-
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { users } from "./auth";
 import { requestForToken } from "./firebaseClient";
 import toast from "react-hot-toast";
@@ -20,27 +18,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [fcmToken, setFcmToken] = useState<string | null>(null);
 
-  // load from localStorage
   useEffect(() => {
-    const s = localStorage.getItem("user");
-    if (s) {
-      const u = JSON.parse(s) as User;
+    const stored = localStorage.getItem("user");
+    if (stored) {
+      const u = JSON.parse(stored);
       setUser(u);
+      if (u.fcmToken) setFcmToken(u.fcmToken);
     }
   }, []);
 
-  // request token when user logs in (or page loads with user)
   useEffect(() => {
     if (!user) return;
     (async () => {
       const token = await requestForToken();
       if (token) {
         setFcmToken(token);
-        // store token with user in localStorage (for simple per-user token storage)
-        const stored = { ...user, fcmToken: token };
-        localStorage.setItem("user", JSON.stringify(stored));
-      } else {
-        toast.error("FCM token not available (check browser/support)");
+        localStorage.setItem(
+          "user",
+          JSON.stringify({ ...user, fcmToken: token })
+        );
       }
     })();
   }, [user]);
@@ -49,14 +45,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const found = users.find(
       (u) => u.email === email && u.password === password
     );
-    if (!found) {
-      return false;
-    }
-    const userObj = { email: found.email, name: found.name };
-    setUser(userObj);
-    // store (fcmToken will be added once retrieved)
-    localStorage.setItem("user", JSON.stringify(userObj));
-    toast.success(`Logged in as ${userObj.name}`);
+    if (!found) return false;
+
+    const u = { email: found.email, name: found.name };
+    setUser(u);
+    localStorage.setItem("user", JSON.stringify(u));
+    toast.success(`Logged in as ${u.name}`);
     return true;
   }
 
@@ -76,6 +70,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
+  if (!ctx) throw new Error("useAuth must be inside AuthProvider");
   return ctx;
 }

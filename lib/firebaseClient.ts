@@ -1,11 +1,5 @@
-// lib/firebaseClient.ts
 import { initializeApp, getApps } from "firebase/app";
-import {
-  getMessaging,
-  getToken,
-  onMessage,
-  Messaging,
-} from "firebase/messaging";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDMEzuwcww_pVJNhPKixC2crDKRr-NXdSQ",
@@ -18,17 +12,25 @@ const firebaseConfig = {
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 
-// Only initialize messaging in the browser
-let messaging: ReturnType<typeof getMessaging> | null = null;
-if (typeof window !== "undefined") {
+export let messaging: ReturnType<typeof getMessaging> | null = null;
+
+if (typeof window !== "undefined" && "serviceWorker" in navigator) {
   try {
     messaging = getMessaging(app);
+    console.log("🛠 Firebase messaging initialized");
   } catch (err) {
-    console.warn("Firebase messaging not supported:", err);
+    console.warn("⚠️ Firebase messaging not supported:", err);
   }
+} else {
+  console.warn(
+    "⚠️ Firebase messaging skipped (not supported in this environment)"
+  );
 }
 
+// Request FCM token
 export const requestForToken = async () => {
+  if (!messaging) return null;
+
   try {
     console.log("🔔 Requesting notification permission...");
     const permission = await Notification.requestPermission();
@@ -37,17 +39,16 @@ export const requestForToken = async () => {
       return null;
     }
 
-    const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+    const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY!;
     if (!vapidKey) {
       console.error("❌ No VAPID key provided in env.");
       return null;
     }
 
-    console.log("✅ Permission granted, fetching FCM token...");
-    const currentToken = await getToken(messaging!, { vapidKey });
-    if (currentToken) {
-      console.log("✅ FCM token retrieved:", currentToken);
-      return currentToken;
+    const token = await getToken(messaging, { vapidKey });
+    if (token) {
+      console.log("✅ FCM token retrieved:", token);
+      return token;
     } else {
       console.error("❌ No token available");
       return null;
@@ -58,10 +59,20 @@ export const requestForToken = async () => {
   }
 };
 
+// Foreground message listener
 export const onMessageListener = () =>
   new Promise((resolve) => {
-    onMessage(messaging!, (payload) => {
+    if (!messaging) return;
+    onMessage(messaging, (payload) => {
       console.log("🔔 Foreground message received:", payload);
+
+      // manually show notification if page is active
+      if (payload?.notification) {
+        new Notification(payload.notification.title!, {
+          body: payload.notification.body,
+        });
+      }
+
       resolve(payload);
     });
   });
