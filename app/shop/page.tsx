@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// app/shop/page.tsx
+
 "use client";
 
 import React, { useEffect } from "react";
@@ -17,11 +17,10 @@ const products = [
 function ShopPageInner() {
   const { user, fcmToken, logout } = useAuth();
 
-  // Foreground message handler → show toast
   useEffect(() => {
     onMessageListener()
       .then((payload: any) => {
-        if (payload?.notification) {
+        if (document.visibilityState === "visible" && payload?.notification) {
           toast.success(
             `🔔 ${payload.notification.title}: ${payload.notification.body}`
           );
@@ -47,7 +46,7 @@ function ShopPageInner() {
           token: fcmToken,
           title: "Order Confirmed",
           body: `Dear ${user.name}, you have ordered ${product.name}`,
-          delaySeconds: 3,
+          delaySeconds: 3, // change delay here
         }),
       });
 

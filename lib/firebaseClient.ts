@@ -55,11 +55,11 @@ export const onMessageListener = () =>
       console.log("🔔 Foreground message received:", payload);
 
       // Show desktop notification for foreground messages
-      if (Notification.permission === "granted") {
-        const title = payload.notification?.title || "Notification";
-        const body = payload.notification?.body || "";
-        new Notification(title, { body });
-      }
+      // if (Notification.permission === "granted") {
+      //   const title = payload.notification?.title || "Notification";
+      //   const body = payload.notification?.body || "";
+      //   new Notification(title, { body });
+      // }
 
       resolve(payload);
     });
