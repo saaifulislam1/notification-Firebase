@@ -16,49 +16,17 @@ const firebaseConfig = {
   appId: "1:481890140409:web:77f8f39f5f5a68ce4de228",
 };
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
-let messaging: Messaging | null = null;
+const app = initializeApp(firebaseConfig);
+const messaging = getMessaging(app);
 
-if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-  try {
-    messaging = getMessaging(app);
-
-    // 🔹 Register the service worker
-    navigator.serviceWorker
-      .register("/firebase-messaging-sw.js")
-      .then((registration) => {
-        console.log("🛠 Service Worker registered:", registration);
-
-        // ✅ Request token after registration
-        requestForToken(registration);
-      })
-      .catch((err) => {
-        console.error("❌ Service Worker registration failed:", err);
-      });
-  } catch (err) {
-    console.error("🔥 Error initializing Firebase Messaging:", err);
-  }
-}
-
-// 🔹 Request Notification Permission + Get Token
-export const requestForToken = async (
-  registration?: ServiceWorkerRegistration
-) => {
-  if (!messaging) {
-    console.warn("⚠️ Messaging not initialized yet.");
-    return null;
-  }
-
+export const requestForToken = async () => {
   try {
     console.log("🔔 Requesting notification permission...");
     const permission = await Notification.requestPermission();
-
     if (permission !== "granted") {
-      console.warn("🚫 Permission not granted for notifications");
+      console.error("❌ Notification permission denied");
       return null;
     }
-
-    console.log("✅ Permission granted, fetching token...");
 
     const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
     if (!vapidKey) {
@@ -66,18 +34,13 @@ export const requestForToken = async (
       return null;
     }
 
-    const token = await getToken(messaging, {
-      vapidKey,
-      serviceWorkerRegistration: registration,
-    });
-
-    if (token) {
-      console.log("🎯 FCM Token retrieved:", token);
-      return token;
+    console.log("✅ Permission granted, fetching FCM token...");
+    const currentToken = await getToken(messaging, { vapidKey });
+    if (currentToken) {
+      console.log("✅ FCM token retrieved:", currentToken);
+      return currentToken;
     } else {
-      console.warn(
-        "⚠️ No registration token available. Request permission to generate one."
-      );
+      console.error("❌ No token available");
       return null;
     }
   } catch (err) {
@@ -86,16 +49,18 @@ export const requestForToken = async (
   }
 };
 
-// 🔹 Foreground message listener
 export const onMessageListener = () =>
   new Promise((resolve) => {
-    if (!messaging) {
-      console.warn("⚠️ Messaging not initialized for foreground messages.");
-      return;
-    }
-
     onMessage(messaging, (payload) => {
-      console.log("📩 Foreground message received:", payload);
+      console.log("🔔 Foreground message received:", payload);
+
+      // Show desktop notification for foreground messages
+      if (Notification.permission === "granted") {
+        const title = payload.notification?.title || "Notification";
+        const body = payload.notification?.body || "";
+        new Notification(title, { body });
+      }
+
       resolve(payload);
     });
   });

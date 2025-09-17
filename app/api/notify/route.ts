@@ -1,36 +1,39 @@
-// app/api/notify/route.ts
-import { NextResponse } from "next/server";
-import { adminMessaging } from "@/lib/firebaseAdmin"; // change export if you used different name
+import { NextRequest, NextResponse } from "next/server";
+import admin from "firebase-admin";
 
-export async function POST(req: Request) {
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+    }),
+  });
+}
+
+export async function POST(req: NextRequest) {
   try {
     const { token, title, body, delaySeconds } = await req.json();
 
-    if (!token) {
-      return NextResponse.json({ error: "Missing token" }, { status: 400 });
-    }
+    if (!token) throw new Error("No FCM token provided");
 
-    const delay = (typeof delaySeconds === "number" ? delaySeconds : 10) * 1000;
+    console.log(`⏳ Scheduling notification in ${delaySeconds || 0}s`);
 
-    // schedule send after delay (server-side setTimeout)
     setTimeout(async () => {
       try {
-        const message = {
-          notification: { title: title || "Notification", body: body || "" },
-          token,
-        };
-        const resp = await adminMessaging.send(message);
-        console.log("FCM send response:", resp);
+        const message = { token, notification: { title, body } };
+        const response = await admin.messaging().send(message);
+        console.log("✅ Notification sent:", response);
       } catch (err) {
-        console.error("FCM send error:", err);
+        console.error("❌ Failed to send notification:", err);
       }
-    }, delay);
+    }, (delaySeconds || 0) * 1000);
 
-    return NextResponse.json({ success: true, scheduledInMs: delay });
+    return NextResponse.json({ success: true, scheduled: true });
   } catch (err) {
-    console.error("Notify API error:", err);
+    console.error("❌ /api/notify error:", err);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { success: false, error: String(err) },
       { status: 500 }
     );
   }
