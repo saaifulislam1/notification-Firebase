@@ -7,6 +7,7 @@ import { AuthProvider } from "@/lib/authContext";
 export const metadata = {
   title: "Shop Demo",
 };
+<link rel="manifest" href="/manifest.webmanifest" />;
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
