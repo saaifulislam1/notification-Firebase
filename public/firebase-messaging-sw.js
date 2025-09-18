@@ -5,6 +5,7 @@ importScripts(
   "https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"
 );
 
+// Initialize Firebase
 firebase.initializeApp({
   apiKey: "AIzaSyDMEzuwcww_pVJNhPKixC2crDKRr-NXdSQ",
   authDomain: "notification-app-78acb.firebaseapp.com",
@@ -15,7 +16,7 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Handle background FCM messages
+// Handle background messages
 messaging.onBackgroundMessage((payload) => {
   const { title, body } = payload.data || payload.notification || {};
   if (title && body) {
@@ -28,7 +29,7 @@ messaging.onBackgroundMessage((payload) => {
   }
 });
 
-// Handle messages forwarded from foreground tab
+// Handle messages forwarded from foreground
 self.addEventListener("message", (event) => {
   const { title, body } = event.data || {};
   if (title && body) {
@@ -45,9 +46,7 @@ self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   event.waitUntil(
     clients.matchAll({ type: "window" }).then((clientList) => {
-      if (clientList.length > 0) {
-        return clientList[0].focus();
-      }
+      if (clientList.length > 0) return clientList[0].focus();
       return clients.openWindow("/");
     })
   );

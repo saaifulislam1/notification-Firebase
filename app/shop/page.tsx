@@ -4,8 +4,8 @@
 import React, { useEffect, useRef } from "react";
 import { useAuth } from "@/lib/authContext";
 import toast from "react-hot-toast";
-import { messaging } from "@/lib/firebaseClient";
 import { onMessage } from "firebase/messaging";
+import { messaging, onMessageListener } from "@/lib/firebaseClient";
 
 const products = [
   { id: "1", name: "Laptop", price: 1200 },
@@ -22,23 +22,19 @@ export default function ShopPage() {
   useEffect(() => {
     if (!messaging || !user) return;
 
-    const unsubscribe = onMessage(messaging, (payload) => {
+    onMessageListener((payload) => {
       const { title, body } = payload.data || payload.notification || {};
-      if (!title || title === "Next.js HMR") return;
-      if (!body || body.includes("site has been updated")) return;
 
-      if (title && body) {
-        // Forward to service worker to show system notification
-        if (navigator.serviceWorker.controller) {
-          navigator.serviceWorker.controller.postMessage({ title, body });
-        } else {
-          // Fallback: show in-page notification
-          new Notification(title, { body, icon: "/icons/icon-192.png" });
-        }
+      if (!title || !body) return;
+
+      // Forward to SW to ensure system notification on mobile
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ title, body });
+      } else {
+        // fallback: show in-page notification
+        new Notification(title, { body, icon: "/icons/icon-192.png" });
       }
     });
-
-    return () => unsubscribe();
   }, [user]);
 
   // const handleOrder = async (product: { id: string; name: string }) => {
