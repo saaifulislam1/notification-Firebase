@@ -1,10 +1,11 @@
+// app/shop/page.tsx
 "use client";
 
 import React, { useEffect, useRef } from "react";
 import { useAuth } from "@/lib/authContext";
 import toast from "react-hot-toast";
-import { messaging } from "@/lib/firebaseClient";
 import { onMessage } from "firebase/messaging";
+import { messaging, onMessageListener } from "@/lib/firebaseClient";
 
 const products = [
   { id: "1", name: "Laptop", price: 1200 },
@@ -17,52 +18,80 @@ export default function ShopPage() {
   const notifiedPayloads = useRef<Set<string>>(new Set());
 
   // Foreground notification listener (FCM only)
+
   useEffect(() => {
     if (!messaging || !user) return;
 
-    const unsubscribe = onMessage(messaging, (payload) => {
-      // Filter out Next.js/Turbopack HMR notifications
-      if (
-        payload?.notification &&
-        payload.notification.title !== "Next.js HMR" &&
-        !payload.notification.body?.includes("site has been updated")
-      ) {
-        new Notification(payload.notification.title!, {
-          body: payload.notification.body,
-          icon: "/icons/icon-192.png",
-        });
+    onMessageListener((payload) => {
+      const { title, body } = payload.data || payload.notification || {};
+
+      if (!title || !body) return;
+
+      // Forward to SW to ensure system notification on mobile
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ title, body });
+      } else {
+        // fallback: show in-page notification
+        new Notification(title, { body, icon: "/icons/icon-192.png" });
       }
     });
-
-    return () => {
-      unsubscribe(); // Cleanup to prevent multiple listeners
-    };
   }, [user]);
 
-  const handleOrder = async (product: { id: string; name: string }) => {
+  // const handleOrder = async (product: { id: string; name: string }) => {
+
+  //   if (!user) return toast.error("Login first");
+  //   if (!fcmToken) return toast.error("FCM token not ready");
+
+  //   toast.success(`✅ Order placed: ${product.name}`);
+
+  //   // Send notification request to backend (via FCM)
+  //   try {
+  //     await fetch("/api/notify", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         token: fcmToken,
+  //         title: "Order Confirmed",
+  //         body: `Dear ${user.name}, you have ordered ${product.name}`,
+  //         delaySeconds: 2,
+  //       }),
+  //     });
+  //   } catch (err) {
+  //     console.error("Notification scheduling failed:", err);
+  //     toast.error("Notification scheduling failed");
+  //   }
+  // };
+  const handleOrder = (product: { id: string; name: string }) => {
     if (!user) return toast.error("Login first");
     if (!fcmToken) return toast.error("FCM token not ready");
 
-    toast.success(`✅ Order placed: ${product.name}`);
+    toast.success(
+      `⏳  order placed  for ${product.name} , we will get back to you soon`,
+      {
+        id: product.id,
+      }
+    );
 
-    // Send notification request to backend (via FCM)
-    try {
-      await fetch("/api/notify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token: fcmToken,
-          title: "Order Confirmed",
-          body: `Dear ${user.name}, you have ordered ${product.name}`,
-          delaySeconds: 2,
-        }),
-      });
-    } catch (err) {
-      console.error("Notification scheduling failed:", err);
-      toast.error("Notification scheduling failed");
-    }
+    setTimeout(async () => {
+      // toast.success(`✅ Order placed: ${product.name}`, { id: product.id });
+
+      try {
+        await fetch("/api/notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token: fcmToken,
+            title: "Order Confirmed",
+            body: `Dear ${user.name},order confirmed,  you have ordered ${product.name}`,
+            delaySeconds: 2,
+          }),
+        });
+      } catch (err) {
+        console.error("Notification scheduling failed:", err);
+        toast.error("Notification scheduling failed", { id: product.id });
+      }
+    }, 5000); // 5 second delay
   };
-
   if (!user) return null;
 
   return (

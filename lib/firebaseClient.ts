@@ -5,7 +5,6 @@ const firebaseConfig = {
   apiKey: "AIzaSyDMEzuwcww_pVJNhPKixC2crDKRr-NXdSQ",
   authDomain: "notification-app-78acb.firebaseapp.com",
   projectId: "notification-app-78acb",
-  storageBucket: "notification-app-78acb.firebasestorage.app",
   messagingSenderId: "481890140409",
   appId: "1:481890140409:web:77f8f39f5f5a68ce4de228",
 };
@@ -29,49 +28,32 @@ if (typeof window !== "undefined" && "serviceWorker" in navigator) {
 // Request FCM token
 export const requestForToken = async () => {
   if (!messaging) return null;
-
   try {
-    console.log("🔔 Requesting notification permission...");
     const permission = await Notification.requestPermission();
-    if (permission !== "granted") {
-      console.error("❌ Notification permission denied");
-      return null;
-    }
+    if (permission !== "granted") return null;
 
     const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY!;
-    if (!vapidKey) {
-      console.error("❌ No VAPID key provided in env.");
-      return null;
-    }
+    if (!vapidKey) return null;
 
     const token = await getToken(messaging, { vapidKey });
-    if (token) {
-      console.log("✅ FCM token retrieved:", token);
-      return token;
-    } else {
-      console.error("❌ No token available");
-      return null;
-    }
+    return token;
   } catch (err) {
-    console.error("❌ Error retrieving FCM token:", err);
+    console.error(err);
     return null;
   }
 };
-// trigger
+
 // Foreground message listener
-export const onMessageListener = () =>
-  new Promise((resolve) => {
-    if (!messaging) return;
-    onMessage(messaging, (payload) => {
-      console.log("🔔 Foreground message received:", payload);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const onMessageListener = (callback: (payload: any) => void) => {
+  if (!messaging) return;
+  onMessage(messaging, (payload) => {
+    const { title, body } = payload.data || payload.notification || {};
 
-      // manually show notification if page is active
-      if (payload?.notification) {
-        new Notification(payload.notification.title!, {
-          body: payload.notification.body,
-        });
-      }
+    // Ignore HMR notifications in development
+    if (!title || title === "Next.js HMR") return;
+    if (body?.includes("site has been updated")) return;
 
-      resolve(payload);
-    });
+    callback(payload);
   });
+};
