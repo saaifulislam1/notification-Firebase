@@ -21,10 +21,11 @@ const messaging = firebase.messaging();
 // Background handler
 messaging.onBackgroundMessage((payload) => {
   console.log("[SW] Background message received", payload);
-  if (payload.notification) {
-    self.registration.showNotification(payload.notification.title, {
-      body: payload.notification.body,
-      icon: "/icons/icon-192.png", // optional
+  const { title, body } = payload.data || {};
+  if (title && body) {
+    self.registration.showNotification(title, {
+      body,
+      icon: "/icons/icon-192.png",
     });
   }
 });

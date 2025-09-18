@@ -1,3 +1,4 @@
+// app/api/notify/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import admin from "firebase-admin";
 
@@ -32,9 +33,7 @@ export async function POST(req: NextRequest) {
     try {
       await admin.messaging().send({
         token,
-        notification: { title, body },
-        android: { notification: { tag: "order-notification" } },
-        apns: { payload: { aps: { "thread-id": "order-notification" } } },
+        data: { title, body },
       });
       console.log("Notification sent:", title, body);
     } catch (err) {

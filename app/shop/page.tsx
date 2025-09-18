@@ -1,3 +1,4 @@
+// app/shop/page.tsx
 "use client";
 
 import React, { useEffect, useRef } from "react";
@@ -23,12 +24,13 @@ export default function ShopPage() {
     const unsubscribe = onMessage(messaging, (payload) => {
       // Filter out Next.js/Turbopack HMR notifications
       if (
-        payload?.notification &&
-        payload.notification.title !== "Next.js HMR" &&
-        !payload.notification.body?.includes("site has been updated")
+        payload?.data
+        //  &&
+        // payload.notification.title !== "Next.js HMR" &&
+        // !payload.notification.body?.includes("site has been updated")
       ) {
-        new Notification(payload.notification.title!, {
-          body: payload.notification.body,
+        new Notification(payload.data.title!, {
+          body: payload.data.body,
           icon: "/icons/icon-192.png",
         });
       }
