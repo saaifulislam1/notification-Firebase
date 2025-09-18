@@ -12,21 +12,49 @@ export async function POST(req: Request) {
       );
     }
 
-    // Construct EasyCron URL
+    if (!process.env.EASYCRON_API_TOKEN || !process.env.NEXT_PUBLIC_SITE_URL) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Missing EASYCRON_API_TOKEN or NEXT_PUBLIC_SITE_URL",
+        },
+        { status: 500 }
+      );
+    }
+
+    // EasyCron free plan only accepts minutes, so convert seconds to minutes
+    const delayMinutes = Math.max(1, Math.ceil(delaySeconds / 60));
+
     const easyCronUrl = `https://www.easycron.com/rest/schedule?token=${
       process.env.EASYCRON_API_TOKEN
     }&url=${encodeURIComponent(
       `${process.env.NEXT_PUBLIC_SITE_URL}/api/send-scheduled`
-    )}&run_every=${delaySeconds}&method=POST&body=${encodeURIComponent(
+    )}&run_every=${delayMinutes}&method=POST&body=${encodeURIComponent(
       JSON.stringify({ token, title, body })
     )}`;
 
-    // Call EasyCron to schedule the notification
+    console.log("EasyCron URL:", easyCronUrl);
+
+    // Call EasyCron
     const res = await fetch(easyCronUrl);
-    const data = await res.json();
+    const text = await res.text();
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.error("EasyCron response not JSON:", text);
+      return NextResponse.json(
+        {
+          success: false,
+          error: "EasyCron scheduling failed: invalid response",
+        },
+        { status: 500 }
+      );
+    }
 
     if (!data.success) {
-      console.error("EasyCron error:", data);
+      console.error("EasyCron scheduling error:", data);
       return NextResponse.json(
         { success: false, error: "EasyCron scheduling failed" },
         { status: 500 }
@@ -35,7 +63,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      message: `Notification scheduled in ~${delaySeconds} seconds via EasyCron`,
+      message: `Notification scheduled in ~${delayMinutes} minute(s) via EasyCron`,
+      easyCronData: data,
     });
   } catch (err: unknown) {
     console.error("Schedule Notification Error:", err);
