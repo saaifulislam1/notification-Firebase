@@ -52,7 +52,7 @@ export default function ShopPage() {
           token: fcmToken,
           title: "Order Processing",
           body: `Dear ${user.name}, your order (${product.name}) is being processed. We will notify after handing out to delivery man!`,
-          delaySeconds: 8, // delay in seconds
+          delaySeconds: 8,
         }),
       });
 
