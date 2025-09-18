@@ -1,3 +1,4 @@
+// route.ts
 import { NextRequest, NextResponse } from "next/server";
 import admin from "firebase-admin";
 
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
 
     await admin.messaging().send({
       token,
-      notification: { title, body }, // ensures system notification
+      // notification: { title, body }, // ensures system notification
       data: { title, body }, // allows foreground SW forwarding
       android: { notification: { tag: "fcm-notification" } },
       apns: { payload: { aps: { "thread-id": "fcm-notification" } } },
