@@ -24,10 +24,9 @@ export default function ShopPage() {
     const unsubscribe = onMessage(messaging, (payload) => {
       // Filter out Next.js/Turbopack HMR notifications
       if (
-        payload?.data
-        //  &&
-        // payload.notification.title !== "Next.js HMR" &&
-        // !payload.notification.body?.includes("site has been updated")
+        payload?.data &&
+        payload.notification!.title !== "Next.js HMR" &&
+        !payload.notification!.body?.includes("site has been updated")
       ) {
         new Notification(payload.data.title!, {
           body: payload.data.body,
