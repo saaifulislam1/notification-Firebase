@@ -1,4 +1,4 @@
-// firebaseclient.ts
+// lib/firebaseclient.ts
 import { initializeApp, getApps } from "firebase/app";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
@@ -21,40 +21,27 @@ if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       console.log("✅ Service Worker registered:", registration);
       messaging = getMessaging(app);
     })
-    .catch((err) => {
-      console.error("❌ Service Worker registration failed:", err);
-    });
+    .catch((err) => console.error("❌ SW registration failed:", err));
 }
 
-// Request FCM token
+// request token
 export const requestForToken = async () => {
   if (!messaging) return null;
-  try {
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") return null;
-
-    const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY!;
-    if (!vapidKey) return null;
-
-    const token = await getToken(messaging, { vapidKey });
-    return token;
-  } catch (err) {
-    console.error(err);
-    return null;
-  }
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") return null;
+  const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY!;
+  if (!vapidKey) return null;
+  return getToken(messaging, { vapidKey });
 };
 
-// Foreground message listener
+// foreground listener
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const onMessageListener = (callback: (payload: any) => void) => {
   if (!messaging) return;
   onMessage(messaging, (payload) => {
     const { title, body } = payload.data || payload.notification || {};
-
-    // Ignore HMR notifications in development
     if (!title || title === "Next.js HMR") return;
     if (body?.includes("site has been updated")) return;
-
     callback(payload);
   });
 };
