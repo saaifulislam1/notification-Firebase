@@ -6,11 +6,15 @@ import { AuthProvider } from "@/lib/authContext";
 
 export const metadata = {
   title: "Shop Demo",
+  // popupdone
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="manifest" href="/manifest.webmanifest" />
+      </head>
       <body>
         <AuthProvider>
           <Toaster position="top-right" />

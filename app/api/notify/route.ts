@@ -1,4 +1,4 @@
-// route.ts
+// app/api/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import admin from "firebase-admin";
 

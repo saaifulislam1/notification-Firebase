@@ -1,3 +1,4 @@
+// /public/firebase-messaging-sw.js
 importScripts(
   "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"
 );
@@ -5,7 +6,6 @@ importScripts(
   "https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"
 );
 
-// Initialize Firebase
 firebase.initializeApp({
   apiKey: "AIzaSyDMEzuwcww_pVJNhPKixC2crDKRr-NXdSQ",
   authDomain: "notification-app-78acb.firebaseapp.com",
@@ -16,7 +16,7 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Handle background messages
+// background messages
 messaging.onBackgroundMessage((payload) => {
   const { title, body } = payload.data || payload.notification || {};
   if (title && body) {
@@ -29,7 +29,7 @@ messaging.onBackgroundMessage((payload) => {
   }
 });
 
-// Handle messages forwarded from foreground
+// messages forwarded from foreground
 self.addEventListener("message", (event) => {
   const { title, body } = event.data || {};
   if (title && body) {
@@ -41,7 +41,7 @@ self.addEventListener("message", (event) => {
   }
 });
 
-// Notification click behavior
+// click behavior
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   event.waitUntil(

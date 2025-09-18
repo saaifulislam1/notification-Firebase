@@ -1,10 +1,8 @@
 // app/shop/page.tsx
 "use client";
-
 import React, { useEffect, useRef } from "react";
 import { useAuth } from "@/lib/authContext";
 import toast from "react-hot-toast";
-import { onMessage } from "firebase/messaging";
 import { messaging, onMessageListener } from "@/lib/firebaseClient";
 
 const products = [
