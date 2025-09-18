@@ -1,3 +1,4 @@
+// firebaseclient.ts
 import { initializeApp, getApps } from "firebase/app";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 

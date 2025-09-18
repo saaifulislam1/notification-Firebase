@@ -37,30 +37,6 @@ export default function ShopPage() {
     });
   }, [user]);
 
-  // const handleOrder = async (product: { id: string; name: string }) => {
-
-  //   if (!user) return toast.error("Login first");
-  //   if (!fcmToken) return toast.error("FCM token not ready");
-
-  //   toast.success(`✅ Order placed: ${product.name}`);
-
-  //   // Send notification request to backend (via FCM)
-  //   try {
-  //     await fetch("/api/notify", {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({
-  //         token: fcmToken,
-  //         title: "Order Confirmed",
-  //         body: `Dear ${user.name}, you have ordered ${product.name}`,
-  //         delaySeconds: 2,
-  //       }),
-  //     });
-  //   } catch (err) {
-  //     console.error("Notification scheduling failed:", err);
-  //     toast.error("Notification scheduling failed");
-  //   }
-  // };
   const handleOrder = (product: { id: string; name: string }) => {
     if (!user) return toast.error("Login first");
     if (!fcmToken) return toast.error("FCM token not ready");
