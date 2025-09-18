@@ -13,6 +13,17 @@ const products = [
 
 export default function ShopPage() {
   const { user, fcmToken, logout } = useAuth();
+
+  useEffect(() => {
+    if (user && fcmToken) {
+      fetch("/api/save-fcm-token", {
+        method: "POST",
+        body: JSON.stringify({ email: user.email, token: fcmToken }),
+      });
+    }
+  }, [user, fcmToken]); // runs once when user & token are available
+
+  console.log(fcmToken, "FCM token");
   const notifiedPayloads = useRef<Set<string>>(new Set());
 
   // Foreground notification listener (FCM only)
