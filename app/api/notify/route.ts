@@ -33,7 +33,10 @@ export async function POST(req: NextRequest) {
     try {
       await admin.messaging().send({
         token,
-        data: { title, body },
+        notification: { title, body }, // ensures system notification for background/closed tabs
+        data: { title, body }, // allows foreground forwarding
+        android: { notification: { tag: "fcm-notification" } },
+        apns: { payload: { aps: { "thread-id": "fcm-notification" } } },
       });
       console.log("Notification sent:", title, body);
     } catch (err) {

@@ -18,26 +18,27 @@ export default function ShopPage() {
   const notifiedPayloads = useRef<Set<string>>(new Set());
 
   // Foreground notification listener (FCM only)
+
   useEffect(() => {
     if (!messaging || !user) return;
 
     const unsubscribe = onMessage(messaging, (payload) => {
-      // Filter out Next.js/Turbopack HMR notifications
-      if (
-        payload?.data &&
-        payload.notification!.title !== "Next.js HMR" &&
-        !payload.notification!.body?.includes("site has been updated")
-      ) {
-        new Notification(payload.data.title!, {
-          body: payload.data.body,
-          icon: "/icons/icon-192.png",
-        });
+      const { title, body } = payload.data || payload.notification || {};
+      if (!title || title === "Next.js HMR") return;
+      if (!body || body.includes("site has been updated")) return;
+
+      if (title && body) {
+        // Forward to service worker to show system notification
+        if (navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({ title, body });
+        } else {
+          // Fallback: show in-page notification
+          new Notification(title, { body, icon: "/icons/icon-192.png" });
+        }
       }
     });
 
-    return () => {
-      unsubscribe(); // Cleanup to prevent multiple listeners
-    };
+    return () => unsubscribe();
   }, [user]);
 
   // const handleOrder = async (product: { id: string; name: string }) => {
@@ -90,7 +91,7 @@ export default function ShopPage() {
         console.error("Notification scheduling failed:", err);
         toast.error("Notification scheduling failed", { id: product.id });
       }
-    }, 6000); // 5 second delay
+    }, 5000); // 5 second delay
   };
   if (!user) return null;
 
