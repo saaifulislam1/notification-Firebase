@@ -6,6 +6,7 @@ import { AuthProvider } from "@/lib/authContext";
 
 export const metadata = {
   title: "Shop Demo",
+  // popupdone
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
