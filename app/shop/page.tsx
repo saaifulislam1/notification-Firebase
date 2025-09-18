@@ -35,37 +35,36 @@ export default function ShopPage() {
     });
   }, [user]);
 
-  const handleOrder = (product: { id: string; name: string }) => {
+  const handleOrder = async (product: { id: string; name: string }) => {
     if (!user) return toast.error("Login first");
     if (!fcmToken) return toast.error("FCM token not ready");
 
     toast.success(
-      `⏳  order placed  for ${product.name} , we will get back to you soon`,
-      {
-        id: product.id,
-      }
+      `⏳ Order placed for ${product.name}, we will notify you shortly`,
+      { id: product.id }
     );
 
-    setTimeout(async () => {
-      // toast.success(`✅ Order placed: ${product.name}`, { id: product.id });
+    try {
+      await fetch("/api/schedule-notification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: fcmToken,
+          title: "Order Processing",
+          body: `Dear ${user.name}, your order (${product.name}) is being processed. We will notify after handing out to delivery man!`,
+          delaySeconds: 8, // delay in seconds
+        }),
+      });
 
-      try {
-        await fetch("/api/notify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            token: fcmToken,
-            title: "Order Confirmed",
-            body: `Dear ${user.name},order confirmed,  you have ordered ${product.name}`,
-            delaySeconds: 2,
-          }),
-        });
-      } catch (err) {
-        console.error("Notification scheduling failed:", err);
-        toast.error("Notification scheduling failed", { id: product.id });
-      }
-    }, 5000); // 5 second delay
+      toast.success("Notification scheduled for 20 seconds later", {
+        id: product.id,
+      });
+    } catch (err) {
+      console.error("Failed to schedule notification:", err);
+      toast.error("Failed to schedule notification", { id: product.id });
+    }
   };
+
   if (!user) return null;
 
   return (
