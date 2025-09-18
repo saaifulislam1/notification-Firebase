@@ -12,6 +12,7 @@ if (!admin.apps.length) {
       privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
     }),
   });
+  //   trigger1
 }
 
 export async function GET(req: NextRequest) {
