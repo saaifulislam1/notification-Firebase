@@ -69,12 +69,15 @@ export default function ShopPage() {
     if (!user) return toast.error("Login first");
     if (!fcmToken) return toast.error("FCM token not ready");
 
-    toast.loading(`⏳ Placing order for ${product.name} in 5s...`, {
-      id: product.id,
-    });
+    toast.success(
+      `⏳  order placed  for ${product.name} , we will get back to you soon`,
+      {
+        id: product.id,
+      }
+    );
 
     setTimeout(async () => {
-      toast.success(`✅ Order placed: ${product.name}`, { id: product.id });
+      // toast.success(`✅ Order placed: ${product.name}`, { id: product.id });
 
       try {
         await fetch("/api/notify", {
@@ -83,7 +86,7 @@ export default function ShopPage() {
           body: JSON.stringify({
             token: fcmToken,
             title: "Order Confirmed",
-            body: `Dear ${user.name}, you have ordered ${product.name}`,
+            body: `Dear ${user.name},order confirmed,  you have ordered ${product.name}`,
             delaySeconds: 2,
           }),
         });
