@@ -17,15 +17,17 @@ export async function POST(req: Request) {
     }
 
     const tokens = fcmTokens[email];
-
     if (!tokens || !tokens.length) {
       return NextResponse.json({ success: false, error: "No FCM token found" });
     }
 
-    // Send push notification
+    // Deduplicate tokens
+    const uniqueTokens = [...new Set(tokens)];
+
+    // Send push notification with data payload only
     const response = await firebaseAdmin.messaging().sendEachForMulticast({
-      tokens,
-      notification: { title, body },
+      tokens: uniqueTokens,
+      data: { title, body }, // 👈 send as data only
     });
 
     return NextResponse.json({ success: true, response });
