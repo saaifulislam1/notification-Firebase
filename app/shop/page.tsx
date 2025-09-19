@@ -1,9 +1,10 @@
 // app/shop/page.tsx
 "use client";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/authContext";
 import toast from "react-hot-toast";
 import { messaging, onMessageListener } from "@/lib/firebaseClient";
+import { useRouter } from "next/navigation"; // Use useRouter from next/navigation
 
 const products = [
   { id: "1", name: "Laptop", price: 1200 },
@@ -12,22 +13,36 @@ const products = [
 ];
 
 export default function ShopPage() {
+  const [isMounted, setIsMounted] = useState(false);
+  const router = useRouter(); // Using the correct useRouter from next/navigation
   const { user, fcmToken, logout } = useAuth();
 
+  // Only set mounted state to true once the component is mounted in the client
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Redirect to home page if no user
+  useEffect(() => {
+    if (isMounted && !user) {
+      router.push("/"); // Redirect to home page if user is not found
+    }
+  }, [user, router, isMounted]);
+
+  // Save FCM token when user is available
   useEffect(() => {
     if (user && fcmToken) {
       fetch("/api/save-fcm-token", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user.email, token: fcmToken }),
       });
     }
-  }, [user, fcmToken]); // runs once when user & token are available
+  }, [user, fcmToken]);
 
-  console.log(fcmToken, "FCM token");
   const notifiedPayloads = useRef<Set<string>>(new Set());
 
-  // Foreground notification listener (FCM only)
-
+  // Foreground notification listener (FCM)
   useEffect(() => {
     if (!messaging || !user) return;
 
@@ -46,20 +61,17 @@ export default function ShopPage() {
     });
   }, [user]);
 
+  // Order handling logic
   const handleOrder = (product: { id: string; name: string }) => {
     if (!user) return toast.error("Login first");
     if (!fcmToken) return toast.error("FCM token not ready");
 
     toast.success(
-      `⏳  order placed  for ${product.name} , we will get back to you soon`,
-      {
-        id: product.id,
-      }
+      `⏳ Order placed for ${product.name}, we will get back to you soon.`,
+      { id: product.id }
     );
 
     setTimeout(async () => {
-      // toast.success(`✅ Order placed: ${product.name}`, { id: product.id });
-
       try {
         await fetch("/api/notify", {
           method: "POST",
@@ -67,7 +79,7 @@ export default function ShopPage() {
           body: JSON.stringify({
             token: fcmToken,
             title: "Order Confirmed",
-            body: `Dear ${user.name},order confirmed,  you have ordered ${product.name}`,
+            body: `Dear ${user.name}, your order for ${product.name} has been confirmed.`,
             delaySeconds: 2,
           }),
         });
@@ -75,9 +87,11 @@ export default function ShopPage() {
         console.error("Notification scheduling failed:", err);
         toast.error("Notification scheduling failed", { id: product.id });
       }
-    }, 5000); // 5 second delay
+    }, 5000); // 5 second delay for ordering confirmation
   };
-  if (!user) return null;
+
+  if (!isMounted) return null; // Wait until mounted before rendering
+  if (!user) return <div>Loading...</div>; // Optionally show a loading state
 
   return (
     <div className="p-6 space-y-6">
@@ -86,7 +100,10 @@ export default function ShopPage() {
         <div className="flex items-center gap-4">
           <span>👋 {user.name}</span>
           <button
-            onClick={logout}
+            onClick={() => {
+              logout(); // Log out and redirect to home page
+              router.push("/"); // Ensure redirect after logout
+            }}
             className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
           >
             Logout
