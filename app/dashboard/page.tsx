@@ -2,6 +2,7 @@
 import { useAuth } from "@/lib/authContext";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 export default function UsersPage() {
   const { user } = useAuth(); // assume user object has { email, name }
@@ -43,10 +44,10 @@ export default function UsersPage() {
 
       const data = await res.json();
 
-      if (data.success) alert("Notification sent!");
+      if (data.success) toast.success("Notification sent!");
       else console.error(data.error);
     } catch (err) {
-      alert("Failed to send notification");
+      toast.error("Failed to send notification");
       console.error(err);
     }
     setLoading(false);
