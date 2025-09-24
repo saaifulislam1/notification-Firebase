@@ -1,26 +1,27 @@
-import type { NextConfig } from "next";
+import { NextConfig } from "next";
 import withPWA from "next-pwa";
 import path from "path";
 
+// Define the base Next.js config
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  webpack: (config: any) => {
-    config.resolve.alias["@sw"] = path.resolve(
-      __dirname,
-      "public/firebase-messaging-sw.js"
-    );
+  webpack(config, { isServer }) {
+    // Only apply alias in production mode
+    if (!isServer && process.env.NODE_ENV === "production") {
+      config.resolve.alias["@sw"] = path.resolve(
+        __dirname,
+        "public/firebase-messaging-sw.js"
+      );
+    }
     return config;
   },
 };
 
 export default withPWA({
   ...nextConfig,
-  pwa: {
-    dest: "public",
-    register: true,
-    skipWaiting: true,
-    disable: process.env.NODE_ENV === "development",
-  },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-} as any); // override TS type
+  // Directly pass PWA options here without nesting it under 'pwa'
+  dest: "public", // Directory to store service worker and manifest
+  register: true, // Automatically register the service worker
+  skipWaiting: true, // Skip the waiting phase and activate the worker immediately
+  disable: process.env.NODE_ENV === "development", // Disable in development mode
+});

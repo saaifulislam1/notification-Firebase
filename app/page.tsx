@@ -1,16 +1,22 @@
 // app/page.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/authContext";
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      router.replace("/shop");
+    }
+  }, [user, router]);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
