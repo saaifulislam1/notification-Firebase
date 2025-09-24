@@ -1,7 +1,17 @@
 "use client";
+import { useAuth } from "@/lib/authContext";
+import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
 export default function UsersPage() {
+  const { user } = useAuth(); // assume user object has { email, name }
+  const router = useRouter();
+  // Redirect non-admins
+  useEffect(() => {
+    if (!user || user.email !== "admin@example.com") {
+      router.replace("/"); // redirect to login or home
+    }
+  }, [user, router]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
