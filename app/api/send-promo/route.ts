@@ -7,7 +7,7 @@ const FILE_PATH = path.join(process.cwd(), "fcmTokens.json");
 
 export async function POST(req: Request) {
   try {
-    const { email, title, body } = await req.json();
+    const { email, title, body, url = "/notification" } = await req.json(); // 👈 default to /notification
 
     // Read FCM tokens from JSON file
     let fcmTokens: Record<string, string[]> = {};
@@ -27,7 +27,11 @@ export async function POST(req: Request) {
     // Send push notification with data payload only
     const response = await firebaseAdmin.messaging().sendEachForMulticast({
       tokens: uniqueTokens,
-      data: { title, body }, // 👈 send as data only
+      data: {
+        title,
+        body,
+        url, // 👈 include URL
+      },
     });
 
     return NextResponse.json({ success: true, response });

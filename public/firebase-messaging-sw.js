@@ -18,13 +18,14 @@ const messaging = firebase.messaging();
 
 // background messages
 messaging.onBackgroundMessage((payload) => {
-  const { title, body } = payload.data || payload.notification || {};
+  const { title, body, url } = payload.data || payload.notification || {};
   if (title && body) {
     self.registration.showNotification(title, {
       body,
       icon: "/icons/icon-192.png",
       tag: "fcm-notification",
       vibrate: [200, 100, 200],
+      data: { url },
     });
   }
 });
@@ -43,11 +44,12 @@ self.addEventListener("message", (event) => {
 
 // click behavior
 self.addEventListener("notificationclick", (event) => {
+  const targetUrl = event.notification.data?.url || "/";
   event.notification.close();
   event.waitUntil(
     clients.matchAll({ type: "window" }).then((clientList) => {
       if (clientList.length > 0) return clientList[0].focus();
-      return clients.openWindow("/");
+      return clients.openWindow(targetUrl);
     })
   );
 });
