@@ -11,20 +11,32 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
-
+  const [isLoading, setIsLoading] = useState(false); // For loading state
   useEffect(() => {
     if (user) {
       router.replace("/shop");
     }
   }, [user, router]);
-
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const ok = login(email.trim(), password);
-    if (ok) {
-      router.push("/shop");
-    } else {
-      setErr("Invalid credentials");
+    setErr(""); // Clear previous errors
+    setIsLoading(true); // Start loading
+
+    try {
+      // Wait for the login promise to resolve
+      const ok = await login(email.trim(), password);
+
+      if (ok) {
+        // The redirect is handled by the useEffect, but pushing here is faster for UX
+        router.push("/shop");
+      } else {
+        setErr("Invalid credentials");
+      }
+    } catch (error) {
+      console.error("An error occurred during login:", error);
+      setErr("An unexpected error occurred.");
+    } finally {
+      setIsLoading(false); // Stop loading
     }
   };
 

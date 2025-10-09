@@ -8,7 +8,7 @@ type User = { email: string; name: string };
 type AuthCtx = {
   user: User | null;
   fcmToken: string | null;
-  login: (email: string, password: string) => boolean;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
 };
 
@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })();
   }, [user]);
 
-  function login(email: string, password: string) {
+  async function login(email: string, password: string): Promise<boolean> {
     const found = users.find(
       (u) => u.email === email && u.password === password
     );
