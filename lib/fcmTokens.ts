@@ -25,7 +25,6 @@ export async function saveFcmToken(email: string, token: string) {
     if (error) {
       console.error("Error saving FCM token:", error.message);
     } else {
-      console.info("Successfully created record");
       console.log("Successfully created record");
     }
   }
