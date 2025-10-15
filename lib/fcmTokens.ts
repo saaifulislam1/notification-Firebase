@@ -10,7 +10,7 @@ export async function saveFcmToken(email: string, token: string) {
   const { data: existing } = await supabase
     .from("fcm_tokens")
     .select("token")
-    .eq("user_email", email) // ✅ Checks for the email...
+    // .eq("user_email", email) // ✅ Checks for the email...
     .eq("token", token) // ✅ ...AND the specific token
     .maybeSingle();
   console.log("same token!");
