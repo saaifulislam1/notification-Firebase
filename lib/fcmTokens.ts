@@ -1,21 +1,49 @@
-//lib/fcmToken.ts
-import fs from "fs";
-import path from "path";
+import { supabase } from "./supabaseClient"; // Import our new helper
 
-const FILE_PATH = path.join(process.cwd(), "fcmTokens.json");
+/**
+ * Saves a token to the Supabase database.
+ * It checks for duplicates before inserting.
+ */
+export async function saveFcmToken(email: string, token: string) {
+  // First, check if this exact email and token pair already exists
+  const { data: existing } = await supabase
+    .from("fcm_tokens")
+    .select("token")
+    .eq("user_email", email)
+    .eq("token", token)
+    .maybeSingle();
 
-// Read current tokens
-export function getFcmTokens(): Record<string, string[]> {
-  if (!fs.existsSync(FILE_PATH)) return {};
-  const data = fs.readFileSync(FILE_PATH, "utf-8");
-  return JSON.parse(data);
+  // If it doesn't exist, add it!
+  if (!existing) {
+    const { error } = await supabase
+      .from("fcm_tokens")
+      .insert([{ user_email: email, token: token }]);
+
+    if (error) {
+      console.error("Error saving FCM token:", error.message);
+    }
+  }
 }
 
-// Add/update a token
-export function saveFcmToken(email: string, token: string) {
-  const tokens = getFcmTokens();
-  if (!tokens[email]) tokens[email] = [];
-  if (!tokens[email].includes(token)) tokens[email].push(token);
+/**
+ * Gets all tokens from Supabase and groups them by email.
+ */
+export async function getFcmTokens(): Promise<Record<string, string[]>> {
+  const { data, error } = await supabase.from("fcm_tokens").select("*");
 
-  fs.writeFileSync(FILE_PATH, JSON.stringify(tokens, null, 2));
+  if (error) {
+    console.error("Error fetching FCM tokens:", error.message);
+    return {};
+  }
+
+  // This part groups the tokens by email, just like your old JSON file did
+  const tokensByEmail: Record<string, string[]> = {};
+  for (const row of data) {
+    if (!tokensByEmail[row.user_email]) {
+      tokensByEmail[row.user_email] = [];
+    }
+    tokensByEmail[row.user_email].push(row.token);
+  }
+
+  return tokensByEmail;
 }
