@@ -13,9 +13,12 @@ export async function saveFcmToken(email: string, token: string) {
     // .eq("user_email", email) // ✅ Checks for the email...
     .eq("token", token) // ✅ ...AND the specific token
     .maybeSingle();
-  console.log("same token!");
+
   // This `if` is now true for every new device, because the token will be different.
   // It only becomes false if the user logs in again on a device that is already registered.
+  if (existing) {
+    console.log("LOG", "Record exists!");
+  }
   if (!existing) {
     const { error } = await supabase
       .from("fcm_tokens")
