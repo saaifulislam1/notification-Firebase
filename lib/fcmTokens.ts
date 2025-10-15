@@ -4,16 +4,18 @@ import { supabase } from "./supabaseClient"; // Import our new helper
  * Saves a token to the Supabase database.
  * It checks for duplicates before inserting.
  */
+// THIS IS THE CORRECT VERSION - IT WORKS
 export async function saveFcmToken(email: string, token: string) {
-  // First, check if this exact email and token pair already exists
+  // Checks if this EXACT email AND token pair already exists
   const { data: existing } = await supabase
     .from("fcm_tokens")
     .select("token")
-    .eq("user_email", email)
-    .eq("token", token)
+    .eq("user_email", email) // ✅ Checks for the email...
+    .eq("token", token) // ✅ ...AND the specific token
     .maybeSingle();
 
-  // If it doesn't exist, add it!
+  // This `if` is now true for every new device, because the token will be different.
+  // It only becomes false if the user logs in again on a device that is already registered.
   if (!existing) {
     const { error } = await supabase
       .from("fcm_tokens")
