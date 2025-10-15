@@ -30,15 +30,15 @@ export default function ShopPage() {
   }, [user, router, isMounted]);
 
   // Save FCM token when user is available
-  useEffect(() => {
-    if (user && fcmToken) {
-      fetch("/api/save-fcm-token", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user.email, token: fcmToken }),
-      });
-    }
-  }, [user, fcmToken]);
+  // useEffect(() => {
+  //   if (user && fcmToken) {
+  //     fetch("/api/save-fcm-token", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ email: user.email, token: fcmToken }),
+  //     });
+  //   }
+  // }, [user, fcmToken]);
 
   const notifiedPayloads = useRef<Set<string>>(new Set());
 
