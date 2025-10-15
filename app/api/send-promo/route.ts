@@ -1,3 +1,4 @@
+//app/api/send-promo/route.ts
 import { NextResponse } from "next/server";
 import { firebaseAdmin } from "@/lib/firebaseAdmin";
 import fs from "fs";
