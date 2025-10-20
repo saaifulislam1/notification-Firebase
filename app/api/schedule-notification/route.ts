@@ -12,16 +12,6 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!process.env.EASYCRON_API_TOKEN || !process.env.NEXT_PUBLIC_SITE_URL) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Missing EASYCRON_API_TOKEN or NEXT_PUBLIC_SITE_URL",
-        },
-        { status: 500 }
-      );
-    }
-
     // EasyCron free plan only accepts minutes, so convert seconds to minutes
     const delayMinutes = Math.max(1, Math.ceil(delaySeconds / 60));
 
