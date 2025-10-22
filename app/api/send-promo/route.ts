@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { firebaseAdmin } from "@/lib/firebaseAdmin";
-import { getFcmTokens } from "@/lib/fcmTokens"; // 👈 Use the new Supabase function
+import { getFcmTokens } from "@/lib/fcmTokens";
 
 export async function POST(req: Request) {
   try {
