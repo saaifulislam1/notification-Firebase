@@ -9,56 +9,48 @@ export async function POST(req: Request) {
     const { email, title, body, url = "/notification" } = await req.json();
 
     const fcmTokens = await getFcmTokens();
-
     const tokens = fcmTokens[email];
+
     if (!tokens || !tokens.length) {
       return NextResponse.json({ success: false, error: "No FCM token found" });
     }
 
     const uniqueTokens = [...new Set(tokens)];
 
-    // == THIS IS THE CORRECTED PAYLOAD ==
+    // == THIS IS THE FIX ==
+    // We are ONLY sending a 'data' payload.
+    // This will be handled by your foreground listener (onMessageListener)
+    // OR your service worker (onBackgroundMessage), but never both.
     const response = await firebaseAdmin.messaging().sendEachForMulticast({
       tokens: uniqueTokens,
 
-      // 1. Add a NOTIFICATION payload
-      // This will be handled automatically by Android/iOS when the app is in the background.
-      notification: {
-        title: title,
-        body: body,
-      },
+      // We remove the 'notification' block completely.
 
-      // 2. Keep the DATA payload
-      // This will be used by your onMessageListener when the app is in the foreground.
       data: {
         title: title,
         body: body,
         url: url,
+        icon: "/icons/icon-192.png", // Send the icon in the data payload
       },
 
-      // 3. Add platform-specific overrides for a better experience
+      // Platform-specific overrides
       webpush: {
-        notification: {
-          // Add an icon for web (Android/Chrome)
-          icon: "/icons/icon-192.png",
-        },
         fcmOptions: {
-          // This makes the notification clickable and opens the URL
+          // This will be used by the service worker's "notificationclick"
           link: url,
         },
       },
       apns: {
         payload: {
           aps: {
-            "content-available": 1, // Wakes up your PWA on iOS
+            // This helps wake up the PWA on iOS
+            "content-available": 1,
           },
         },
       },
     });
 
-    // Add this log to see the actual response from Firebase
     console.log("Firebase send response:", JSON.stringify(response, null, 2));
-
     return NextResponse.json({ success: true, response });
   } catch (error) {
     return NextResponse.json({

@@ -31,16 +31,16 @@ messaging.onBackgroundMessage((payload) => {
 });
 
 // messages forwarded from foreground
-self.addEventListener("message", (event) => {
-  const { title, body } = event.data || {};
-  if (title && body) {
-    self.registration.showNotification(title, {
-      body,
-      icon: "/icons/icon-192.png",
-      tag: "fcm-notification",
-    });
-  }
-});
+// self.addEventListener("message", (event) => {
+//   const { title, body } = event.data || {};
+//   if (title && body) {
+//     self.registration.showNotification(title, {
+//       body,
+//       icon: "/icons/icon-192.png",
+//       tag: "fcm-notification",
+//     });
+//   }
+// });
 
 // click behavior
 self.addEventListener("notificationclick", (event) => {
