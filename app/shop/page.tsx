@@ -1,5 +1,4 @@
 /* app/shop/page.tsx (Corrected Version) */
-
 "use client";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/lib/authContext";

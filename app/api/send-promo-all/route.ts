@@ -32,7 +32,7 @@ export async function POST(req: Request) {
             token: token,
             data: {
               title: title,
-              body: personalizedBody, // Uses the new personalized body
+              body: personalizedBody,
               url: url,
             },
           });

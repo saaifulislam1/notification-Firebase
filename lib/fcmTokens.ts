@@ -4,7 +4,7 @@ import { supabase } from "./supabaseClient"; // Import our new helper
  * Saves a token to the Supabase database.
  * It checks for duplicates before inserting.
  */
-// THIS IS THE CORRECT VERSION - IT WORKS
+
 export async function saveFcmToken(email: string, token: string) {
   // Checks if this EXACT email AND token pair already exists
   const { data: existing } = await supabase
