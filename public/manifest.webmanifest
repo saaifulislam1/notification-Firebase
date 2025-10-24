@@ -2,7 +2,7 @@
   "name": "My Shop App",
   "short_name": "ShopApp",
   "description": "Shop app with notifications",
-  "start_url": "/",
+  "start_url": "/shop",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",

@@ -38,7 +38,7 @@ export const requestForToken = async () => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const onMessageListener = (callback: (payload: any) => void) => {
   if (!messaging) return;
-  onMessage(messaging, (payload) => {
+  return onMessage(messaging, (payload) => {
     const { title, body } = payload.data || payload.notification || {};
     if (!title || title === "Next.js HMR") return;
     if (body?.includes("site has been updated")) return;

@@ -1,10 +1,10 @@
-// app/shop/page.tsx
+/* app/shop/page.tsx (Corrected Version) */
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@/lib/authContext";
 import toast from "react-hot-toast";
-import { messaging, onMessageListener } from "@/lib/firebaseClient";
-import { useRouter } from "next/navigation"; // Use useRouter from next/navigation
+import { onMessageListener, requestForToken } from "@/lib/firebaseClient";
+import { useRouter } from "next/navigation";
 
 const products = [
   { id: "1", name: "Laptop", price: 1200 },
@@ -12,65 +12,100 @@ const products = [
   { id: "3", name: "Headphones", price: 200 },
 ];
 
+// == NEW HELPER FUNCTION ==
+// This helps us detect if we need to show the special instructions for Apple users.
+const isAppleDevice = () =>
+  typeof navigator !== "undefined" &&
+  /iPad|iPhone|iPod/.test(navigator.userAgent);
+
 export default function ShopPage() {
   const [isMounted, setIsMounted] = useState(false);
-  const router = useRouter(); // Using the correct useRouter from next/navigation
+  const router = useRouter();
   const { user, fcmToken, logout } = useAuth();
+  const [showIOSCard, setShowIOSCard] = useState(false);
 
-  // Only set mounted state to true once the component is mounted in the client
   useEffect(() => {
     setIsMounted(true);
+    // Check if we should show the iOS instructions card
+    if (isAppleDevice()) {
+      setShowIOSCard(true);
+    }
   }, []);
 
-  // Redirect to home page if no user
   useEffect(() => {
     if (isMounted && !user) {
-      router.push("/"); // Redirect to home page if user is not found
+      router.push("/");
     }
   }, [user, router, isMounted]);
 
-  // Save FCM token when user is available
-
-  // useEffect(() => {
-  //   if (user && fcmToken) {
-  //     fetch("/api/save-fcm-token", {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({ email: user.email, token: fcmToken }),
-  //     });
-  //   }
-  // }, [user, fcmToken]);
-
-  const notifiedPayloads = useRef<Set<string>>(new Set());
-
-  // Foreground notification listener (FCM)
+  // CORRECTED: Foreground notification listener with cleanup
   useEffect(() => {
-    if (!messaging || !user) return;
+    if (!user) return;
 
-    onMessageListener((payload) => {
-      const { title, body } = payload.data || payload.notification || {};
-
-      if (!title || !body) return;
-
-      // Forward to SW to ensure system notification on mobile
-      if (navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({ title, body });
-      } else {
-        // fallback: show in-page notification
-        new Notification(title, { body, icon: "/icons/icon-192.png" });
+    // onMessageListener returns an "unsubscribe" function
+    const unsubscribe = onMessageListener((payload) => {
+      const { title, body } = payload.data || {};
+      if (title && body) {
+        // Using a toast is a great way to show in-app notifications
+        toast.success(
+          <div className="text-left">
+            <b>{title}</b>
+            <p>{body}</p>
+          </div>
+        );
       }
     });
+
+    // This cleanup function is called when the component unmounts
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [user]);
 
-  // Order handling logic
-  const handleOrder = (product: { id: string; name: string }) => {
-    if (!user) return toast.error("Login first");
-    if (!fcmToken) return toast.error("FCM token not ready");
+  // == NEW FUNCTION ==
+  // This is called by the new button to handle the permission request on iOS
+  const handleEnableNotifications = async () => {
+    if (!user) return toast.error("Please log in first.");
 
-    toast.success(
-      `⏳ Order placed for ${product.name}, we will get back to you soon.`,
-      { id: product.id }
-    );
+    toast.loading("Requesting notification permission...");
+    const token = await requestForToken(); // Your existing Firebase client function
+    toast.dismiss();
+
+    if (token) {
+      try {
+        await fetch("/api/save-fcm-token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: user.email, token }),
+        });
+        toast.success("Notifications have been enabled!");
+      } catch (error) {
+        toast.error("Could not save your notification settings.");
+      }
+    } else {
+      toast.error(
+        "Permission was not granted. You may need to enable it in your device settings."
+      );
+    }
+  };
+
+  // Your handleOrder logic is correct and remains the same
+  const handleOrder = (product: {
+    id: string;
+    name: string;
+    price?: number;
+  }) => {
+    if (!user) return toast.error("Login first");
+    if (!fcmToken)
+      return toast.error(
+        "FCM token not ready, please wait or enable notifications."
+      );
+
+    toast.success(`⏳ Placing order for ${product.name}...`, {
+      id: product.id,
+    });
 
     setTimeout(async () => {
       try {
@@ -78,21 +113,19 @@ export default function ShopPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            token: fcmToken,
+            email: user.email,
             title: "Order Confirmed",
             body: `Dear ${user.name}, your order for ${product.name} has been confirmed.`,
-            delaySeconds: 2,
           }),
         });
       } catch (err) {
         console.error("Notification scheduling failed:", err);
         toast.error("Notification scheduling failed", { id: product.id });
       }
-    }, 5000); // 5 second delay for ordering confirmation
+    }, 2000);
   };
 
-  if (!isMounted) return null; // Wait until mounted before rendering
-  if (!user) return <div>Loading...</div>; // Optionally show a loading state
+  if (!isMounted || !user) return <div>Loading...</div>;
 
   return (
     <div className="p-6 space-y-6">
@@ -102,8 +135,8 @@ export default function ShopPage() {
           <span>👋 {user.name}</span>
           <button
             onClick={() => {
-              logout(); // Log out and redirect to home page
-              router.push("/"); // Ensure redirect after logout
+              logout();
+              router.push("/");
             }}
             className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
           >
@@ -111,6 +144,28 @@ export default function ShopPage() {
           </button>
         </div>
       </div>
+
+      {/* == NEW UI FOR IOS USERS == */}
+      {showIOSCard && (
+        <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded-md shadow-md">
+          <p className="font-bold">Enable Notifications on your iPhone</p>
+          <p className="text-sm">
+            To receive notifications, please add this app to your Home Screen:
+          </p>
+          <ol className="list-decimal list-inside text-sm mt-2">
+            <li>Tap the Share icon in Safari.</li>
+            <li>Scroll down and select Add to Home Screen.</li>
+            <li>Open the app from your Home Screen.</li>
+          </ol>
+          <button
+            onClick={handleEnableNotifications}
+            className="mt-3 bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition"
+          >
+            Enable Notifications
+          </button>
+        </div>
+      )}
+      {/* ========================== */}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {products.map((p) => (
