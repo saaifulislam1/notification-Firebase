@@ -182,7 +182,7 @@ export default function UsersPage() {
           <div>
             <label
               htmlFor="title"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-extrabold text-black"
             >
               Title
             </label>
@@ -198,7 +198,7 @@ export default function UsersPage() {
           <div>
             <label
               htmlFor="body"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-extrabold text-black"
             >
               Body
             </label>
