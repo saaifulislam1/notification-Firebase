@@ -8,7 +8,7 @@ import { users } from "@/lib/auth"; // Needs the user list for names
 export async function POST(req: Request) {
   try {
     // Only uses the title from the frontend
-    const { title, url = "/notification" } = await req.json();
+    const { title, body, url = "/notification" } = await req.json();
 
     const allTokenRecords = await getFcmTokens();
 
@@ -25,7 +25,8 @@ export async function POST(req: Request) {
 
       if (userTokens && userTokens.length > 0) {
         // Creates a new personalized body
-        const personalizedBody = `Hi ${user.name}, tap to check out our new deals!`;
+        // const personalizedBody = `Hi ${user.name}, tap to check out our new deals!`;
+        const personalizedBody = body.replace("{name}", user.name);
 
         for (const token of userTokens) {
           messages.push({

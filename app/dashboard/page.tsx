@@ -1,9 +1,9 @@
-/* app/dashboard/page.tsx (Corrected Version) */
+/* app/dashboard/page.tsx */
 
 "use client";
 import { useAuth } from "@/lib/authContext";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState, useRef } from "react"; // 1. Import useRef
+import React, { useEffect, useState, useRef } from "react";
 import toast from "react-hot-toast";
 
 // A simple, reusable SVG spinner component
@@ -40,7 +40,13 @@ export default function UsersPage() {
   const [singleLoading, setSingleLoading] = useState<string | null>(null);
   const [allLoading, setAllLoading] = useState(false);
 
-  // 2. Create a ref to track if the component is mounted
+  // --- NEW: State for notification content ---
+  const [title, setTitle] = useState("A Special Promo!");
+  const [body, setBody] = useState(
+    "Hi {name}, tap here to check out our latest offers!"
+  );
+
+  // Create a ref to track if the component is mounted
   const isMounted = useRef(false);
   useEffect(() => {
     isMounted.current = true;
@@ -62,7 +68,6 @@ export default function UsersPage() {
       fetch("/api/users-with-fcm")
         .then((res) => res.json())
         .then((data) => {
-          // 3. Add mounted check
           if (data.success && isMounted.current) {
             setUsers(data.users);
           }
@@ -71,22 +76,26 @@ export default function UsersPage() {
     }
   }, [user]);
 
-  // Send promo to a single user
+  // --- UPDATED: Send promo to a single user ---
   const sendPromo = async (email: string, name: string) => {
     setSingleLoading(email);
+
+    // Use title and body from state, replacing placeholder
+    const messageTitle = title;
+    const messageBody = body.replace("{name}", name);
+
     try {
       const res = await fetch("/api/send-promo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
-          title: "A Special Promo Just For You!",
-          body: `Hi ${name}, tap here to check out our latest offers!`,
+          title: messageTitle, // Use state title
+          body: messageBody, // Use state body with name replaced
         }),
       });
 
       const data = await res.json();
-      // 3. Add mounted check
       if (isMounted.current) {
         if (data.success) toast.success(`Notification sent to ${name}!`);
         else toast.error(`Failed to send to ${name}.`);
@@ -96,26 +105,30 @@ export default function UsersPage() {
         toast.error("Failed to send notification");
       }
     }
-    // 3. Add mounted check
     if (isMounted.current) {
       setSingleLoading(null);
     }
   };
 
-  // NEW: Send promo to all users
+  // --- UPDATED: Send promo to all users ---
   const sendPromoToAll = async () => {
     setAllLoading(true);
+
+    // Use a generic fallback for {name} in case it's in the template
+    const messageTitle = title;
+    // const messageBody = body.replace("{name}", "there");
+
     try {
       const res = await fetch("/api/send-promo-all", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: "A Site-Wide Announcement!",
+          title: messageTitle, // Use state title
+          body: body, // Use state body
         }),
       });
 
       const data = await res.json();
-      // 3. Add mounted check
       if (isMounted.current) {
         if (data.success) {
           toast.success(
@@ -130,7 +143,6 @@ export default function UsersPage() {
         toast.error("Failed to send notification to all.");
       }
     }
-    // 3. Add mounted check
     if (isMounted.current) {
       setAllLoading(false);
     }
@@ -161,7 +173,59 @@ export default function UsersPage() {
         </button>
       </div>
 
+      {/* --- NEW: Notification Content Form --- */}
+      <div className="bg-white shadow rounded-lg p-4 sm:p-6 mb-6">
+        <h2 className="text-lg font-medium text-gray-900 mb-4">
+          Notification Content
+        </h2>
+        <div className="flex flex-col gap-4">
+          <div>
+            <label
+              htmlFor="title"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Title
+            </label>
+            <input
+              type="text"
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              disabled={allLoading || !!singleLoading}
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="body"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Body
+            </label>
+            <textarea
+              id="body"
+              rows={3}
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              disabled={allLoading || !!singleLoading}
+            />
+            <p className="mt-2 text-sm text-gray-500">
+              Use{" "}
+              <code className="bg-gray-100 px-1.5 py-0.5 rounded text-red-500 font-mono text-xs">
+                {`{name}`}
+              </code>{" "}
+              as a placeholder for the users name.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* --- Existing User List --- */}
       <div className="bg-white shadow rounded-lg divide-y divide-gray-200">
+        <div className="px-4 py-3 sm:px-6">
+          <h2 className="text-lg font-medium text-gray-900">User List</h2>
+        </div>
         {users.length === 0 ? (
           <div className="p-6 text-gray-500 text-center">
             No users with active notifications found.
@@ -173,11 +237,13 @@ export default function UsersPage() {
                 key={u.email}
                 className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-4 gap-3 hover:bg-gray-50 transition"
               >
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900 break-words">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-gray-900 break-words truncate">
                     {u.name}
                   </p>
-                  <p className="text-sm text-gray-500 break-words">{u.email}</p>
+                  <p className="text-sm text-gray-500 break-words truncate">
+                    {u.email}
+                  </p>
                 </div>
                 <button
                   onClick={() => sendPromo(u.email, u.name)}
