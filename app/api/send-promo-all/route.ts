@@ -1,4 +1,4 @@
-/* app/api/send-promo-all/route.ts (Personalized With Names) */
+/* app/api/send-promo-all/route.ts */
 
 import { NextResponse } from "next/server";
 import { firebaseAdmin } from "@/lib/firebaseAdmin";
