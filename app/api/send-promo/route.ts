@@ -52,10 +52,10 @@ export async function POST(req: Request) {
 
       // 3. Add platform-specific overrides for a better experience
       webpush: {
-        notification: {
-          // Add an icon for web (Android/Chrome)
-          icon: "/icons/icon-192.png",
-        },
+        // notification: {
+        //   // Add an icon for web (Android/Chrome)
+        //   icon: "/icons/icon-192.png",
+        // },
         fcmOptions: {
           // This makes the notification clickable and opens the URL
           link: url,
