@@ -36,18 +36,19 @@ export async function POST(req: Request) {
 
       // 1. Add a NOTIFICATION payload
       // This will be handled automatically by Android/iOS when the app is in the background.
-      notification: {
-        title: title,
-        body: body,
-      },
+      // notification: {
+      //   title: title,
+      //   body: body,
+      // },
 
       // 2. Keep the DATA payload
       // This will be used by your onMessageListener when the app is in the foreground.
-      // data: {
-      //   title: title,
-      //   body: body,
-      //   url: url,
-      // },
+      data: {
+        title: title,
+        body: body,
+        url: url,
+        icon: "/icons/icon-192.png", // Send the icon here
+      },
 
       // 3. Add platform-specific overrides for a better experience
       webpush: {
