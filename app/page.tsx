@@ -65,7 +65,7 @@ export default function LoginPage() {
           required
         />
 
-        <button className="w-full bg-blue-600 text-white py-2 rounded">
+        <button className="w-full bg-[#6A32F7] text-white py-2 rounded">
           Login
         </button>
         {err && <p className="text-red-500 mt-2">{err}</p>}
