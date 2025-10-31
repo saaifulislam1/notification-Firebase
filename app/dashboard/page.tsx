@@ -4,31 +4,8 @@
 import { useAuth } from "@/lib/authContext";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState, useRef } from "react";
+import { Send, Users, Bell, Edit3, AlertCircle, List } from "lucide-react";
 import toast from "react-hot-toast";
-
-// A simple, reusable SVG spinner component
-const LoadingSpinner = () => (
-  <svg
-    className="animate-spin -ml-1 mr-2 h-5 w-5 text-white"
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-  >
-    <circle
-      className="opacity-25"
-      cx="12"
-      cy="12"
-      r="10"
-      stroke="currentColor"
-      strokeWidth="4"
-    ></circle>
-    <path
-      className="opacity-75"
-      fill="currentColor"
-      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-    ></path>
-  </svg>
-);
 
 export default function UsersPage() {
   const { user } = useAuth();
@@ -157,107 +134,208 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-3">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
-          📩 Users with FCM
-        </h1>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header Section */}
+        <div className="mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg">
+                <Bell className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  FCM Users Dashboard
+                </h1>
+                <p className="text-gray-600 mt-1">
+                  Manage and send notifications to your users
+                </p>
+              </div>
+            </div>
 
-        <button
-          onClick={sendPromoToAll}
-          disabled={allLoading || users.length === 0 || !!singleLoading}
-          className="w-full sm:w-auto flex justify-center items-center bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg shadow-sm transition"
-        >
-          {allLoading && <LoadingSpinner />}
-          {allLoading ? "Sending to All..." : "Send Promo to All"}
-        </button>
-      </div>
-
-      {/* --- NEW: Notification Content Form --- */}
-      <div className="bg-white shadow rounded-lg p-4 sm:p-6 mb-6">
-        <h2 className="text-lg font-medium text-gray-900 mb-4">
-          Notification Content
-        </h2>
-        <div className="flex flex-col gap-4">
-          <div>
-            <label
-              htmlFor="title"
-              className="block text-sm font-extrabold text-black"
+            <button
+              onClick={sendPromoToAll}
+              disabled={allLoading || users.length === 0 || !!singleLoading}
+              className="flex items-center justify-center space-x-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-3 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed font-semibold"
             >
-              Title
-            </label>
-            <input
-              type="text"
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              disabled={allLoading || !!singleLoading}
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="body"
-              className="block text-sm font-extrabold text-black"
-            >
-              Body
-            </label>
-            <textarea
-              id="body"
-              rows={3}
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              disabled={allLoading || !!singleLoading}
-            />
-            <p className="mt-2 text-sm text-gray-500">
-              Use{" "}
-              <code className="bg-gray-100 px-1.5 py-0.5 rounded text-red-500 font-mono text-xs">
-                {`{name}`}
-              </code>{" "}
-              as a placeholder for the users name.
-            </p>
+              {allLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Sending to All...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="w-5 h-5" />
+                  <span>Send Promo to All</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
-      </div>
 
-      {/* --- Existing User List --- */}
-      <div className="bg-white shadow rounded-lg divide-y divide-gray-200">
-        <div className="px-4 py-3 sm:px-6">
-          <h2 className="text-lg font-medium text-gray-900">User List</h2>
-        </div>
-        {users.length === 0 ? (
-          <div className="p-6 text-gray-500 text-center">
-            No users with active notifications found.
-          </div>
-        ) : (
-          <ul>
-            {users.map((u) => (
-              <li
-                key={u.email}
-                className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-4 gap-3 hover:bg-gray-50 transition"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 break-words truncate">
-                    {u.name}
-                  </p>
-                  <p className="text-sm text-gray-500 break-words truncate">
-                    {u.email}
-                  </p>
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          {/* Notification Form Section */}
+          <div className="xl:col-span-2">
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
+                <h2 className="text-xl font-bold text-gray-900 flex items-center space-x-3">
+                  <Edit3 className="w-6 h-6 text-blue-600" />
+                  <span>Notification Content</span>
+                </h2>
+              </div>
+              <div className="p-6 space-y-6">
+                <div>
+                  <label
+                    htmlFor="title"
+                    className="block text-sm font-semibold text-gray-900 mb-2"
+                  >
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    id="title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    placeholder="Enter notification title..."
+                    disabled={allLoading || !!singleLoading}
+                  />
                 </div>
-                <button
-                  onClick={() => sendPromo(u.email, u.name)}
-                  disabled={allLoading || !!singleLoading}
-                  className="w-full sm:w-auto flex justify-center items-center bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg shadow-sm transition"
-                  style={{ minWidth: "130px" }}
+                <div>
+                  <label
+                    htmlFor="body"
+                    className="block text-sm font-semibold text-gray-900 mb-2"
+                  >
+                    Message Body
+                  </label>
+                  <textarea
+                    id="body"
+                    rows={4}
+                    value={body}
+                    onChange={(e) => setBody(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    placeholder="Enter your notification message..."
+                    disabled={allLoading || !!singleLoading}
+                  />
+                  <div className="mt-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <p className="text-sm text-blue-800 flex items-center space-x-2">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>
+                        Pro tip: Use{" "}
+                        <code className="bg-white px-2 py-1 rounded-md border border-blue-200 text-blue-600 font-mono text-sm">
+                          {"{name}"}
+                        </code>{" "}
+                        as a placeholder for the users name
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats Sidebar */}
+          {/* <div className="xl:col-span-1">
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Quick Stats
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-green-50 rounded-xl border border-green-200">
+                  <div>
+                    <p className="text-2xl font-bold text-green-900">
+                      {users.length}
+                    </p>
+                    <p className="text-sm text-green-700">Total Users</p>
+                  </div>
+                  <div className="p-3 bg-green-100 rounded-lg">
+                    <Users className="w-6 h-6 text-green-600" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div> */}
+        </div>
+
+        {/* User List Section */}
+        <div className="mt-8 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+          <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center space-x-3">
+              <List className="w-6 h-6 text-gray-700" />
+              <span>User List</span>
+              <span className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
+                {users.length} users
+              </span>
+            </h2>
+          </div>
+
+          {users.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="w-10 h-10 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                No Users Found
+              </h3>
+              <p className="text-gray-600 max-w-sm mx-auto">
+                No users with active notifications are currently registered in
+                the system.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {users.map((u) => (
+                <div
+                  key={u.email}
+                  className="flex flex-col lg:flex-row lg:items-center lg:justify-between p-6 hover:bg-gray-50 transition-all duration-200 group"
                 >
-                  {singleLoading === u.email && <LoadingSpinner />}
-                  {singleLoading === u.email ? "Sending..." : "Send Promo"}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+                  <div className="flex-1 min-w-0 mb-4 lg:mb-0">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                        <span className="text-white font-semibold text-sm">
+                          {u.name
+                            ? u.name.charAt(0).toUpperCase()
+                            : u.email.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900 truncate">
+                          {u.name || "No Name"}
+                        </p>
+                        <p className="text-sm text-gray-500 truncate">
+                          {u.email}
+                        </p>
+                      </div>
+                    </div>
+                    {u.fcm_token && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Active FCM
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => sendPromo(u.email, u.name)}
+                    disabled={allLoading || !!singleLoading}
+                    className="flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-3 rounded-xl shadow-sm transition-all duration-300 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed font-medium min-w-[140px]"
+                  >
+                    {singleLoading === u.email ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Sending...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4" />
+                        <span>Send Promo</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
