@@ -1,12 +1,25 @@
-/* app/api/send-promo/route.ts (Corrected) */
+/* app/api/send-promo/route.ts  */
 
 import { NextResponse } from "next/server";
 import { firebaseAdmin } from "@/lib/firebaseAdmin";
 import { getFcmTokens } from "@/lib/fcmTokens"; // Ensure this path is correct
+import { supabase } from "@/lib/supabaseClient";
 
 export async function POST(req: Request) {
   try {
     const { email, title, body, url = "/notification" } = await req.json();
+
+    const { error: logError } = await supabase.from("notifications").insert({
+      user_email: email,
+      title: title,
+      body: body,
+      url: url,
+    });
+
+    if (logError) {
+      console.error("Error logging notification:", logError.message);
+      // We'll just log the error but still try to send
+    }
 
     const fcmTokens = await getFcmTokens();
 
@@ -23,25 +36,26 @@ export async function POST(req: Request) {
 
       // 1. Add a NOTIFICATION payload
       // This will be handled automatically by Android/iOS when the app is in the background.
-      notification: {
-        title: title,
-        body: body,
-      },
+      // notification: {
+      //   title: title,
+      //   body: body,
+      // },
 
       // 2. Keep the DATA payload
       // This will be used by your onMessageListener when the app is in the foreground.
-      // data: {
-      //   title: title,
-      //   body: body,
-      //   url: url,
-      // },
+      data: {
+        title: title,
+        body: body,
+        url: url,
+        icon: "/icons/icon-192.png", // Send the icon here
+      },
 
       // 3. Add platform-specific overrides for a better experience
       webpush: {
-        notification: {
-          // Add an icon for web (Android/Chrome)
-          icon: "/icons/icon-192.png",
-        },
+        // notification: {
+        //   // Add an icon for web (Android/Chrome)
+        //   icon: "/icons/icon-192.png",
+        // },
         fcmOptions: {
           // This makes the notification clickable and opens the URL
           link: url,

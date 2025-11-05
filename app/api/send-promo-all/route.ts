@@ -1,15 +1,14 @@
-/* app/api/send-promo-all/route.ts (Personalized With Names) */
+/* app/api/send-promo-all/route.ts */
 
 import { NextResponse } from "next/server";
 import { firebaseAdmin } from "@/lib/firebaseAdmin";
 import { getFcmTokens } from "@/lib/fcmTokens";
 import { users } from "@/lib/auth"; // Needs the user list for names
-
+import { supabase } from "@/lib/supabaseClient";
 export async function POST(req: Request) {
   try {
     // Only uses the title from the frontend
-    const { title, url = "/notification" } = await req.json();
-
+    const { title, body, url = "/notification" } = await req.json();
     const allTokenRecords = await getFcmTokens();
 
     if (Object.keys(allTokenRecords).length === 0) {
@@ -20,12 +19,22 @@ export async function POST(req: Request) {
     }
 
     const messages = [];
+    const notificationsToLog = [];
     for (const user of users) {
+      // if (user.email === "admin@example.com") continue;
       const userTokens = allTokenRecords[user.email];
 
       if (userTokens && userTokens.length > 0) {
         // Creates a new personalized body
-        const personalizedBody = `Hi ${user.name}, tap to check out our new deals!`;
+        // const personalizedBody = `Hi ${user.name}, tap to check out our new deals!`;
+        const personalizedBody = body.replace("{name}", user.name);
+
+        notificationsToLog.push({
+          user_email: user.email,
+          title: title,
+          body: personalizedBody,
+          url: url,
+        });
 
         for (const token of userTokens) {
           messages.push({
@@ -46,7 +55,12 @@ export async function POST(req: Request) {
         error: "No tokens found for any known users.",
       });
     }
-
+    const { error: logError } = await supabase
+      .from("notifications")
+      .insert(notificationsToLog);
+    if (logError) {
+      console.error("Error batch logging notifications:", logError.message);
+    }
     const response = await firebaseAdmin.messaging().sendEach(messages);
     return NextResponse.json({ success: true, response });
   } catch (error) {

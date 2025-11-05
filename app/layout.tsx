@@ -21,7 +21,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="My Shop App" />
       </head>
-      <body>
+      <body suppressHydrationWarning={true}>
         <AuthProvider>
           <Toaster position="top-right" />
           <Navbar />
