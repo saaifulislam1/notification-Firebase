@@ -1,4 +1,4 @@
-/* app/promotion/page.tsx (NEW FILE) */
+/* app/notification/page.tsx */
 
 "use client";
 import React, { useEffect, useState } from "react";
@@ -17,13 +17,16 @@ type Promotion = {
 };
 
 export default function PromotionPage() {
-  const { user } = useAuth();
+  const { user, authLoading } = useAuth();
   const router = useRouter();
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
 
   // This effect runs when the user object is available
   useEffect(() => {
+    if (authLoading) {
+      return; // Do nothing, we are still checking for a user
+    }
     // If user is not logged in, do nothing
     if (!user) {
       router.replace("/");
