@@ -1,32 +1,28 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-/* app/api/promotions/[id]/route.ts (Corrected) */
-// @ts-nocheck
+/* app/api/promotions/[id]/route.ts (Fixed) */
+
 import { NextRequest, NextResponse } from "next/server";
-// == FIX #1: Import the CORRECT client ==
+// Use your admin client (name can be supabase or supabaseAdmin, just be consistent)
 import { supabase } from "@/lib/supabaseAdmin";
 
-// Helper to validate and parse the ID
+// --- Helpers ---
 function parseId(id: string): number | null {
   const parsedId = parseInt(id, 10);
-  if (isNaN(parsedId)) {
-    return null; // Not a valid number
-  }
-  return parsedId;
+  return Number.isNaN(parsedId) ? null : parsedId;
 }
 
-// == FIX #2: Define the function signature this way ==
-// This is the workaround for the stubborn Next.js type bug.
-type RouteContext = {
-  params: {
-    id: string;
-  };
-};
+// Accept both plain params and promised params (to satisfy Next's route typing)
+type MaybePromise<T> = T | Promise<T>;
+type RouteContext = { params: MaybePromise<{ id: string }> };
 
-// We define the handler function separately
+async function getIdFromContext(context: RouteContext): Promise<number | null> {
+  const params = await context.params; // works for T and Promise<T>
+  return parseId(params?.id ?? "");
+}
+
+// --- Handlers ---
 async function putHandler(req: NextRequest, context: RouteContext) {
   try {
-    const id = parseId(context.params.id);
-    // Note: Your frontend is only sending these three fields. This is correct.
+    const id = await getIdFromContext(context);
     const { title, text, image_link } = await req.json();
 
     if (id === null) {
@@ -42,14 +38,9 @@ async function putHandler(req: NextRequest, context: RouteContext) {
       );
     }
 
-    // == And we use 'supabaseAdmin' here ==
     const { data, error } = await supabase
       .from("promotions")
-      .update({
-        title,
-        text,
-        image_link,
-      })
+      .update({ title, text, image_link })
       .eq("id", id)
       .select();
 
@@ -60,6 +51,7 @@ async function putHandler(req: NextRequest, context: RouteContext) {
         { status: 404 }
       );
     }
+
     return NextResponse.json({ success: true, data: data[0] });
   } catch (error) {
     const errorMessage =
@@ -72,10 +64,10 @@ async function putHandler(req: NextRequest, context: RouteContext) {
   }
 }
 
-// We do the same for DELETE
 async function deleteHandler(req: NextRequest, context: RouteContext) {
   try {
-    const id = parseId(context.params.id);
+    const id = await getIdFromContext(context);
+
     if (id === null) {
       return NextResponse.json(
         { success: false, error: "Invalid ID format." },
@@ -83,7 +75,6 @@ async function deleteHandler(req: NextRequest, context: RouteContext) {
       );
     }
 
-    // == And we use 'supabaseAdmin' here ==
     const { data, error } = await supabase
       .from("promotions")
       .delete()
@@ -97,6 +88,7 @@ async function deleteHandler(req: NextRequest, context: RouteContext) {
         { status: 404 }
       );
     }
+
     return NextResponse.json({ success: true, message: "Promotion deleted." });
   } catch (error) {
     const errorMessage =
@@ -109,6 +101,5 @@ async function deleteHandler(req: NextRequest, context: RouteContext) {
   }
 }
 
-// == FIX #3: We export the handlers in an object ==
-// This "hides" the signature from the Next.js type checker and fixes the error.
+// Export handlers (keeps signatures hidden from the route module type)
 export { putHandler as PUT, deleteHandler as DELETE };
