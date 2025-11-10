@@ -13,10 +13,11 @@ function parseId(id: string): number | null {
 }
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    const id = parseId(params.id);
+    // == FIX #2: Get 'id' from 'context.params' and parse it ==
+    const id = parseId(context.params.id);
     const { title, text, image_link } = await req.json();
 
     if (!title) {
@@ -70,10 +71,11 @@ export async function PUT(
 // (This was likely fine, but is included for completeness)
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    const id = parseId(params.id);
+    // == FIX #2: Apply the ID parse fix here too ==
+    const id = parseId(context.params.id);
 
     // We also use .select() here to check if the row existed
     const { data, error } = await supabase
