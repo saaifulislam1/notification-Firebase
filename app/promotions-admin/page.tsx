@@ -49,9 +49,9 @@ export default function PromotionsAdminPage() {
 
   // Auth & Data Fetching
   useEffect(() => {
-    // if (user && user.email !== "admin@example.com") {
-    //   router.replace("/");
-    // }
+    if (user && user.email !== "admin@example.com") {
+      router.replace("/");
+    }
     if (user && user.email === "admin@example.com") {
       fetchPromotions();
     }

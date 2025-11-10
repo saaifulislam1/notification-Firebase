@@ -17,6 +17,7 @@ import {
   User,
   Sparkles,
   History,
+  BookText,
 } from "lucide-react";
 
 export default function Navbar() {
@@ -30,14 +31,9 @@ export default function Navbar() {
       href: "/shop",
       label: "Shop",
       icon: ShoppingBag,
-      visible: !!user,
+      visible: !!user && !isAdmin,
     },
-    {
-      href: "/dashboard",
-      label: "Dashboard",
-      icon: LayoutDashboard,
-      visible: isAdmin,
-    },
+
     {
       href: "/notification",
       label: "Notifications",
@@ -46,8 +42,20 @@ export default function Navbar() {
     },
     {
       href: "/admin-history",
-      label: "History",
+      label: "Sent",
       icon: History,
+      visible: isAdmin,
+    },
+    {
+      href: "/dashboard",
+      label: "Dashboard",
+      icon: LayoutDashboard,
+      visible: isAdmin,
+    },
+    {
+      href: "/promotions-admin",
+      label: " Promo",
+      icon: BookText,
       visible: isAdmin,
     },
   ];
