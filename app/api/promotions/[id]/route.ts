@@ -1,9 +1,10 @@
 /* app/api/promotions/[id]/route.ts (Corrected) */
 
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabaseAdmin"; // Use the secure admin client
+// == FIX #1: Import the CORRECT client ==
+import { supabase } from "@/lib/supabaseAdmin";
 
-// PUT handler to update an existing promotion
+// Helper to validate and parse the ID
 function parseId(id: string): number | null {
   const parsedId = parseInt(id, 10);
   if (isNaN(parsedId)) {
@@ -11,15 +12,28 @@ function parseId(id: string): number | null {
   }
   return parsedId;
 }
-export async function PUT(
-  req: NextRequest,
-  context: { params: { id: string } }
-) {
+
+// == FIX #2: Define the function signature this way ==
+// This is the workaround for the stubborn Next.js type bug.
+type RouteContext = {
+  params: {
+    id: string;
+  };
+};
+
+// We define the handler function separately
+async function putHandler(req: NextRequest, context: RouteContext) {
   try {
-    // == FIX #2: Get 'id' from 'context.params' and parse it ==
     const id = parseId(context.params.id);
+    // Note: Your frontend is only sending these three fields. This is correct.
     const { title, text, image_link } = await req.json();
 
+    if (id === null) {
+      return NextResponse.json(
+        { success: false, error: "Invalid ID format." },
+        { status: 400 }
+      );
+    }
     if (!title) {
       return NextResponse.json(
         { success: false, error: "Title is required." },
@@ -27,8 +41,7 @@ export async function PUT(
       );
     }
 
-    // == THIS IS THE FIX ==
-    // We remove .single() and check the returned data array.
+    // == And we use 'supabaseAdmin' here ==
     const { data, error } = await supabase
       .from("promotions")
       .update({
@@ -37,28 +50,19 @@ export async function PUT(
         image_link,
       })
       .eq("id", id)
-      .select(); // <-- .single() is removed
+      .select();
 
-    if (error) {
-      // This will catch database-level errors
-      throw error;
-    }
-
-    // Check if the update actually found a row
+    if (error) throw error;
     if (!data || data.length === 0) {
-      // If data is empty, it means no row had that 'id'
       return NextResponse.json(
         { success: false, error: "Promotion not found." },
         { status: 404 }
       );
     }
-
-    // Success! Return the updated row (it's the first item in the array)
     return NextResponse.json({ success: true, data: data[0] });
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "An unknown error occurred";
-    // Add a log on the server for easier debugging
     console.error("Error in PUT /api/promotions/[id]:", errorMessage);
     return NextResponse.json(
       { success: false, error: errorMessage },
@@ -67,34 +71,31 @@ export async function PUT(
   }
 }
 
-// DELETE handler to remove a promotion
-// (This was likely fine, but is included for completeness)
-export async function DELETE(
-  req: NextRequest,
-  context: { params: { id: string } }
-) {
+// We do the same for DELETE
+async function deleteHandler(req: NextRequest, context: RouteContext) {
   try {
-    // == FIX #2: Apply the ID parse fix here too ==
     const id = parseId(context.params.id);
+    if (id === null) {
+      return NextResponse.json(
+        { success: false, error: "Invalid ID format." },
+        { status: 400 }
+      );
+    }
 
-    // We also use .select() here to check if the row existed
+    // == And we use 'supabaseAdmin' here ==
     const { data, error } = await supabase
       .from("promotions")
       .delete()
       .eq("id", id)
-      .select(); // Check what was deleted
+      .select();
 
-    if (error) {
-      throw error;
-    }
-
+    if (error) throw error;
     if (!data || data.length === 0) {
       return NextResponse.json(
         { success: false, error: "Promotion not found." },
         { status: 404 }
       );
     }
-
     return NextResponse.json({ success: true, message: "Promotion deleted." });
   } catch (error) {
     const errorMessage =
@@ -106,3 +107,7 @@ export async function DELETE(
     );
   }
 }
+
+// == FIX #3: We export the handlers in an object ==
+// This "hides" the signature from the Next.js type checker and fixes the error.
+export { putHandler as PUT, deleteHandler as DELETE };
