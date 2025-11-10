@@ -4,12 +4,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabaseAdmin"; // Use the secure admin client
 
 // PUT handler to update an existing promotion
+function parseId(id: string): number | null {
+  const parsedId = parseInt(id, 10);
+  if (isNaN(parsedId)) {
+    return null; // Not a valid number
+  }
+  return parsedId;
+}
 export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = params.id;
+    const id = parseId(params.id);
     const { title, text, image_link } = await req.json();
 
     if (!title) {
@@ -66,7 +73,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = params.id;
+    const id = parseId(params.id);
 
     // We also use .select() here to check if the row existed
     const { data, error } = await supabase
