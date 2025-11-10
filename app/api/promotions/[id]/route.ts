@@ -1,11 +1,11 @@
 /* app/api/promotions/[id]/route.ts (Corrected) */
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabaseAdmin"; // Use the secure admin client
 
 // PUT handler to update an existing promotion
 export async function PUT(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -62,7 +62,7 @@ export async function PUT(
 // DELETE handler to remove a promotion
 // (This was likely fine, but is included for completeness)
 export async function DELETE(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
