@@ -1,4 +1,4 @@
-import { supabase } from "./supabaseClient"; // Import our new helper
+import { supabase } from "./supabaseAdmin"; // Import our new helper
 
 /**
  * Saves a token to the Supabase database.

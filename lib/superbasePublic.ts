@@ -1,5 +1,3 @@
-/* lib/supabaseClient.ts (NEW FILE) */
-
 import { createClient } from "@supabase/supabase-js";
 
 // These keys are safe to be exposed in the browser.

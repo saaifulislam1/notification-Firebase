@@ -13,8 +13,11 @@ export default function LoginPage() {
   const [err, setErr] = useState("");
   const [isLoading, setIsLoading] = useState(false); // For loading state
   useEffect(() => {
-    if (user) {
-      router.replace("/shop");
+    if (user && user.email !== "admin@example.com") {
+      router.replace("/");
+    }
+    if (user && user.email === "admin@example.com") {
+      router.replace("/dashboard");
     }
   }, [user, router]);
   const submit = async (e: React.FormEvent) => {
@@ -28,7 +31,12 @@ export default function LoginPage() {
 
       if (ok) {
         // The redirect is handled by the useEffect, but pushing here is faster for UX
-        router.push("/shop");
+        if (user && user.email !== "admin@example.com") {
+          router.replace("/");
+        }
+        if (user && user.email === "admin@example.com") {
+          router.replace("/dashboard");
+        }
       } else {
         setErr("Invalid credentials");
       }

@@ -1,13 +1,21 @@
+/* lib/authContext.tsx (Updated) */
+
 "use client";
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { users } from "./auth";
 import { requestForToken } from "./firebaseClient";
 import toast from "react-hot-toast";
 
+// Helper function
+const isAppleDevice = () =>
+  typeof navigator !== "undefined" &&
+  /iPad|iPhone|iPod/.test(navigator.userAgent);
+
 type User = { email: string; name: string };
 type AuthCtx = {
   user: User | null;
   fcmToken: string | null;
+  authLoading: boolean; // <-- 1. ADD THIS
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
 };
@@ -17,8 +25,8 @@ const AuthContext = createContext<AuthCtx | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [fcmToken, setFcmToken] = useState<string | null>(null);
-  // 1. ADD A "FLAG" STATE. This will track if we have already tried to save a token.
   const [tokenSaveAttempted, setTokenSaveAttempted] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true); // <-- 2. ADD THIS (default true)
 
   async function saveTokenToServer(email: string, token: string) {
     try {
@@ -32,21 +40,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  // This useEffect restores the user session from localStorage
   useEffect(() => {
-    const stored = localStorage.getItem("user");
-    if (stored) {
-      setUser(JSON.parse(stored));
+    try {
+      const stored = localStorage.getItem("user");
+      if (stored) {
+        setUser(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.error("Failed to parse user from localStorage", e);
+    } finally {
+      setAuthLoading(false); // <-- 3. SET LOADING TO FALSE WHEN DONE
     }
-  }, []);
+  }, []); // Runs only once on app load
 
+  // This useEffect gets the token
   useEffect(() => {
-    // If there's no user OR if we have already attempted to save the token, do nothing.
-    if (!user || tokenSaveAttempted) return;
+    // Wait for auth to finish loading
+    if (!user || tokenSaveAttempted || authLoading || isAppleDevice()) {
+      return;
+    }
 
     const getTokenAndSave = async () => {
-      // 2. SET THE FLAG TO TRUE immediately. This prevents this logic from running again.
       setTokenSaveAttempted(true);
-
       const token = await requestForToken();
       if (token) {
         setFcmToken(token);
@@ -57,9 +73,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await saveTokenToServer(user.email, token);
       }
     };
-
     getTokenAndSave();
-  }, [user, tokenSaveAttempted]); // Add the flag to the dependency array
+  }, [user, tokenSaveAttempted, authLoading]); // Add authLoading
 
   async function login(email: string, password: string): Promise<boolean> {
     const found = users.find(
@@ -77,14 +92,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   function logout() {
     setUser(null);
     setFcmToken(null);
-    // 3. RESET THE FLAG ON LOGOUT. This is important for the next user who logs in.
     setTokenSaveAttempted(false);
     localStorage.removeItem("user");
     toast.success("Logged out");
   }
 
   return (
-    <AuthContext.Provider value={{ user, fcmToken, login, logout }}>
+    // 4. PROVIDE THE NEW STATE
+    <AuthContext.Provider
+      value={{ user, fcmToken, authLoading, login, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

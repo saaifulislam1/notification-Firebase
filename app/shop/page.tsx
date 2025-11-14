@@ -149,9 +149,18 @@ export default function ShopPage() {
     }
   }, []);
 
+  //   if (user && user.email !== "admin@example.com") {
+  //   router.replace("/");
+  // }
+  // if (user && user.email === "admin@example.com") {
+  //   router.replace("/dashboard");
+  // }
   useEffect(() => {
     if (isMounted && !user) {
       router.push("/");
+    }
+    if (user && user.email === "admin@example.com") {
+      router.replace("/dashboard");
     }
   }, [user, router, isMounted]);
 

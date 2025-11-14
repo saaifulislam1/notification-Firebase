@@ -59,17 +59,17 @@ export default function PromotionPage() {
       ];
 
       // If no promotion IDs are linked, we're done.
-      // if (promoIds.length === 0) {
-      //   setPromotions([]);
-      //   setLoading(false);
-      //   return;
-      // }
+      if (promoIds.length === 0) {
+        setPromotions([]);
+        setLoading(false);
+        return;
+      }
 
       // Step 3: Fetch the actual promotions from the 'promotions' table
       const { data: promoData, error: promoError } = await supabase
         .from("promotions")
         .select("*")
-        // .in("id", promoIds) // Get all promotions whose ID is in our list
+        .in("id", promoIds) // Get all promotions whose ID is in our list
         .order("created_at", { ascending: false });
 
       if (promoError) {
@@ -111,7 +111,7 @@ export default function PromotionPage() {
         ) : (
           <ul className="divide-y divide-gray-200">
             {promotions.map((promo) => (
-              <li key={promo.id} className="p-4 gap-2 sm:p-6">
+              <li key={promo.id} className="p-4 sm:p-6">
                 {/* Optional Image */}
                 {promo.image_link && (
                   <img
