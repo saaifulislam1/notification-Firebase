@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { firebaseAdmin } from "@/lib/firebaseAdmin";
 import { getFcmTokens } from "@/lib/fcmTokens";
 import { users } from "@/lib/auth"; // Needs the user list for names
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabaseAdmin";
 export async function POST(req: Request) {
   try {
     // Only uses the title from the frontend

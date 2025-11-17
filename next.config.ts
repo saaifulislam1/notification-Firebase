@@ -4,17 +4,29 @@ import path from "path";
 
 // Define the base Next.js config
 const nextConfig: NextConfig = {
-  reactStrictMode: true,
-  webpack(config, { isServer }) {
-    // Only apply alias in production mode
-    if (!isServer && process.env.NODE_ENV === "production") {
-      config.resolve.alias["@sw"] = path.resolve(
-        __dirname,
-        "public/firebase-messaging-sw.js"
-      );
-    }
-    return config;
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**", // This is the wildcard that means "any domain"
+      },
+      {
+        protocol: "http", // Also allow non-secure http
+        hostname: "**",
+      },
+    ],
   },
+  reactStrictMode: true,
+  // webpack(config, { isServer }) {
+  //   // Only apply alias in production mode
+  //   if (!isServer && process.env.NODE_ENV === "production") {
+  //     config.resolve.alias["@sw"] = path.resolve(
+  //       __dirname,
+  //       "public/firebase-messaging-sw.js"
+  //     );
+  //   }
+  //   return config;
+  // },
 };
 
 export default withPWA({
