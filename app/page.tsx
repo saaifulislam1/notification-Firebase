@@ -14,7 +14,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false); // For loading state
   useEffect(() => {
     if (user && user.email !== "admin@example.com") {
-      router.replace("/");
+      router.replace("/shop");
     }
     if (user && user.email === "admin@example.com") {
       router.replace("/dashboard");
@@ -32,7 +32,7 @@ export default function LoginPage() {
       if (ok) {
         // The redirect is handled by the useEffect, but pushing here is faster for UX
         if (user && user.email !== "admin@example.com") {
-          router.replace("/");
+          router.replace("/shop");
         }
         if (user && user.email === "admin@example.com") {
           router.replace("/dashboard");
