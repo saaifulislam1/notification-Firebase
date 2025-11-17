@@ -250,7 +250,7 @@ export default function UsersPage() {
                     placeholder="Enter your notification message..."
                     disabled={allLoading || !!singleLoading}
                   />
-                  <div className="mt-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="mt-3 p-4 bg-blue-50 rounded-lg border border-blue-200 mb-3">
                     <p className="text-sm text-blue-800 flex items-center space-x-2">
                       <AlertCircle className="w-4 h-4" />
                       <span>
@@ -262,7 +262,7 @@ export default function UsersPage() {
                       </span>
                     </p>
                   </div>
-                  <div>
+                  <div className="pt- space-y-0">
                     <label
                       htmlFor="promo-select"
                       className="block text-sm font-semibold text-gray-900 mb-2 flex items-center space-x-2"
