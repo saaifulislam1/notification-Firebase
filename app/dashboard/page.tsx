@@ -4,9 +4,20 @@
 import { useAuth } from "@/lib/authContext";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState, useRef } from "react";
-import { Send, Users, Bell, Edit3, AlertCircle, List } from "lucide-react";
+import {
+  Send,
+  Users,
+  Bell,
+  Edit3,
+  AlertCircle,
+  List,
+  Megaphone,
+} from "lucide-react";
 import toast from "react-hot-toast";
-
+type Promotion = {
+  id: number;
+  title: string;
+};
 export default function UsersPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -22,8 +33,9 @@ export default function UsersPage() {
   const [body, setBody] = useState(
     "Hi {name}, tap here to check out our latest offers!"
   );
-
-  // Create a ref to track if the component is mounted
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [selectedPromoId, setSelectedPromoId] = useState<string>("");
+  console.log(selectedPromoId, "selectedPromoId");
   const isMounted = useRef(false);
   useEffect(() => {
     isMounted.current = true;
@@ -34,9 +46,9 @@ export default function UsersPage() {
 
   // Redirect non-admins
   useEffect(() => {
-    if (!user) {
-      router.replace("/");
-    }
+    // if (!user) {
+    //   router.replace("/");
+    // }
     if (user && user.email !== "admin@example.com") {
       router.replace("/");
     }
@@ -53,6 +65,22 @@ export default function UsersPage() {
           }
         })
         .catch((err) => console.error(err));
+
+      const fetchPromotions = async () => {
+        try {
+          const res = await fetch("/api/promotions"); // Call the new API
+          const data = await res.json();
+
+          if (data.success && isMounted.current) {
+            setPromotions(data.data);
+          } else {
+            toast.error(data.error || "Failed to fetch promotions.");
+          }
+        } catch (err) {
+          toast.error("An error occurred fetching promotions.");
+        }
+      };
+      fetchPromotions();
     }
   }, [user]);
 
@@ -72,6 +100,7 @@ export default function UsersPage() {
           email,
           title: messageTitle, // Use state title
           body: messageBody, // Use state body with name replaced
+          selectedPromoId,
         }),
       });
 
@@ -103,8 +132,9 @@ export default function UsersPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: messageTitle, // Use state title
-          body: body, // Use state body
+          title: messageTitle,
+          body: body,
+          selectedPromoId,
         }),
       });
 
@@ -231,6 +261,31 @@ export default function UsersPage() {
                         as a placeholder for the users name
                       </span>
                     </p>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="promo-select"
+                      className="block text-sm font-semibold text-gray-900 mb-2 flex items-center space-x-2"
+                    >
+                      <Megaphone className="w-5 h-5 text-green-600" />
+                      <span>Select a Promotion (Optional)</span>
+                    </label>
+                    <select
+                      id="promo-select"
+                      value={selectedPromoId}
+                      onChange={(e) => setSelectedPromoId(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm"
+                      disabled={allLoading || !!singleLoading}
+                    >
+                      <option value="">
+                        -- Send a custom text message below --
+                      </option>
+                      {promotions.map((promo) => (
+                        <option key={promo.id} value={promo.id}>
+                          {promo.title}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>

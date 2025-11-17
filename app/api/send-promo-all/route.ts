@@ -8,7 +8,12 @@ import { supabase } from "@/lib/supabaseAdmin";
 export async function POST(req: Request) {
   try {
     // Only uses the title from the frontend
-    const { title, body, url = "/notification" } = await req.json();
+    const {
+      title,
+      body,
+      selectedPromoId,
+      url = "/notification",
+    } = await req.json();
     const allTokenRecords = await getFcmTokens();
 
     if (Object.keys(allTokenRecords).length === 0) {
@@ -34,6 +39,7 @@ export async function POST(req: Request) {
           title: title,
           body: personalizedBody,
           url: url,
+          promotion_id: selectedPromoId,
         });
 
         for (const token of userTokens) {
