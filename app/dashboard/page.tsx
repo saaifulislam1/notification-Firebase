@@ -12,12 +12,20 @@ import {
   AlertCircle,
   List,
   Megaphone,
+  Plus,
+  Image as ImageIcon,
+  Type,
+  FileText,
 } from "lucide-react";
 import toast from "react-hot-toast";
+
 type Promotion = {
   id: number;
   title: string;
+  text?: string;
+  image_link?: string;
 };
+
 export default function UsersPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -27,13 +35,24 @@ export default function UsersPage() {
   const [singleLoading, setSingleLoading] = useState<string | null>(null);
   const [allLoading, setAllLoading] = useState(false);
 
-  // --- NEW: State for notification content ---
+  // --- Notification content state ---
   const [title, setTitle] = useState("A Special Promo!");
   const [body, setBody] = useState(
     "Hi {name}, tap here to check out our latest offers!"
   );
+
+  // --- Promotions State ---
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [selectedPromoId, setSelectedPromoId] = useState<string>("");
+
+  // --- NEW: Create Promotion State ---
+  const [promoMode, setPromoMode] = useState<"select" | "create">("select");
+  const [isCreatingPromo, setIsCreatingPromo] = useState(false);
+  const [newPromoData, setNewPromoData] = useState({
+    title: "",
+    text: "",
+    image_link: "",
+  });
 
   const isMounted = useRef(false);
   useEffect(() => {
@@ -41,7 +60,7 @@ export default function UsersPage() {
     return () => {
       isMounted.current = false;
     };
-  }, []); // Empty array means this runs once on mount and once on unmount
+  }, []);
 
   // Redirect non-admins
   useEffect(() => {
@@ -53,9 +72,10 @@ export default function UsersPage() {
     }
   }, [user, router]);
 
-  // Fetch users with FCM tokens
+  // Fetch users and promotions
   useEffect(() => {
     if (user) {
+      // Fetch Users
       fetch("/api/users-with-fcm")
         .then((res) => res.json())
         .then((data) => {
@@ -65,9 +85,10 @@ export default function UsersPage() {
         })
         .catch((err) => console.error(err));
 
+      // Fetch Promotions
       const fetchPromotions = async () => {
         try {
-          const res = await fetch("/api/promotions"); // Call the new API
+          const res = await fetch("/api/promotions");
           const data = await res.json();
 
           if (data.success && isMounted.current) {
@@ -83,11 +104,50 @@ export default function UsersPage() {
     }
   }, [user]);
 
-  // --- UPDATED: Send promo to a single user ---
+  // --- NEW: Handle Create Promotion ---
+  const handleCreatePromotion = async () => {
+    if (!newPromoData.title) {
+      toast.error("Promotion title is required");
+      return;
+    }
+
+    setIsCreatingPromo(true);
+    try {
+      const res = await fetch("/api/promotions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newPromoData),
+      });
+      const data = await res.json();
+
+      if (data.success && isMounted.current) {
+        const newPromo = data.data;
+
+        // 1. Add new promo to list
+        setPromotions([newPromo, ...promotions]);
+        // 2. Select the new promo
+        setSelectedPromoId(newPromo.id.toString());
+        // 3. Reset form
+        setNewPromoData({ title: "", text: "", image_link: "" });
+        // 4. Switch back to select mode
+        setPromoMode("select");
+
+        toast.success("Promotion created and selected!");
+      } else {
+        toast.error(data.error || "Failed to create promotion");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Error creating promotion");
+    } finally {
+      if (isMounted.current) setIsCreatingPromo(false);
+    }
+  };
+
+  // Send promo to a single user
   const sendPromo = async (email: string, name: string) => {
     setSingleLoading(email);
 
-    // Use title and body from state, replacing placeholder
     const messageTitle = title;
     const messageBody = body.replace("{name}", name);
 
@@ -118,18 +178,16 @@ export default function UsersPage() {
     }
   };
 
-  // --- UPDATED: Send promo to all users ---
+  // Send promo to all users
   const sendPromoToAll = async () => {
     setAllLoading(true);
-
-    const messageTitle = title;
 
     try {
       const res = await fetch("/api/send-promo-all", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: messageTitle,
+          title: title,
           body: body,
           selectedPromoId,
         }),
@@ -214,76 +272,186 @@ export default function UsersPage() {
                 </h2>
               </div>
               <div className="p-6 space-y-6">
-                <div>
-                  <label
-                    htmlFor="title"
-                    className="block text-sm font-semibold text-gray-900 mb-2"
-                  >
-                    Title
-                  </label>
-                  <input
-                    type="text"
-                    id="title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder="Enter notification title..."
-                    disabled={allLoading || !!singleLoading}
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="body"
-                    className="block text-sm font-semibold text-gray-900 mb-2"
-                  >
-                    Message Body
-                  </label>
-                  <textarea
-                    id="body"
-                    rows={4}
-                    value={body}
-                    onChange={(e) => setBody(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder="Enter your notification message..."
-                    disabled={allLoading || !!singleLoading}
-                  />
-                  <div className="mt-3 p-4 bg-blue-50 rounded-lg border border-blue-200 mb-3">
-                    <p className="text-sm text-blue-800 flex items-center space-x-2">
-                      <AlertCircle className="w-4 h-4" />
-                      <span>
-                        Pro tip: Use{" "}
-                        <code className="bg-white px-2 py-1 rounded-md border border-blue-200 text-blue-600 font-mono text-sm">
-                          {"{name}"}
-                        </code>{" "}
-                        as a placeholder for the users name
-                      </span>
-                    </p>
-                  </div>
-                  <div className="pt- space-y-0">
+                {/* Notification Title & Body */}
+                <div className="grid grid-cols-1 gap-6">
+                  <div>
                     <label
-                      htmlFor="promo-select"
-                      className="block text-sm font-semibold text-gray-900 mb-2 flex items-center space-x-2"
+                      htmlFor="title"
+                      className="block text-sm font-semibold text-gray-900 mb-2"
                     >
-                      <Megaphone className="w-5 h-5 text-green-600" />
-                      <span>Select a Promotion (Optional)</span>
+                      Notification Title
                     </label>
-                    <select
-                      id="promo-select"
-                      value={selectedPromoId}
-                      onChange={(e) => setSelectedPromoId(e.target.value)}
+                    <input
+                      type="text"
+                      id="title"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm"
+                      placeholder="Enter notification title..."
                       disabled={allLoading || !!singleLoading}
-                    >
-                      <option value="">
-                        -- Send a custom text message below --
-                      </option>
-                      {promotions.map((promo) => (
-                        <option key={promo.id} value={promo.id}>
-                          {promo.title}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </div>
+                  <div>
+                    <label
+                      htmlFor="body"
+                      className="block text-sm font-semibold text-gray-900 mb-2"
+                    >
+                      Notification Body
+                    </label>
+                    <textarea
+                      id="body"
+                      rows={3}
+                      value={body}
+                      onChange={(e) => setBody(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm resize-none"
+                      placeholder="Enter your notification message..."
+                      disabled={allLoading || !!singleLoading}
+                    />
+                    <div className="mt-2 flex items-center space-x-2 text-xs text-blue-600">
+                      <AlertCircle className="w-3 h-3" />
+                      <span>
+                        Use <code>{"{name}"}</code> for the users name
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <hr className="border-gray-100" />
+
+                {/* --- PROMOTION SECTION --- */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <label className="block text-sm font-semibold text-gray-900 flex items-center space-x-2">
+                      <Megaphone className="w-5 h-5 text-green-600" />
+                      <span>Promotion Data</span>
+                    </label>
+
+                    {/* Toggle Switch */}
+                    <div className="flex bg-gray-100 p-1 rounded-lg">
+                      <button
+                        onClick={() => setPromoMode("select")}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
+                          promoMode === "select"
+                            ? "bg-white text-gray-900 shadow-sm"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
+                      >
+                        Select Existing
+                      </button>
+                      <button
+                        onClick={() => setPromoMode("create")}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
+                          promoMode === "create"
+                            ? "bg-white text-blue-600 shadow-sm"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
+                      >
+                        Create New
+                      </button>
+                    </div>
+                  </div>
+
+                  {promoMode === "select" ? (
+                    // SELECT MODE
+                    <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                      <select
+                        id="promo-select"
+                        value={selectedPromoId}
+                        onChange={(e) => setSelectedPromoId(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm"
+                        disabled={allLoading || !!singleLoading}
+                      >
+                        <option value="">-- No Promotion Linked --</option>
+                        {promotions.map((promo) => (
+                          <option key={promo.id} value={promo.id}>
+                            {promo.title}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="mt-2 text-xs text-gray-500">
+                        This links a database record to your notification so the
+                        app can show full details when opened.
+                      </p>
+                    </div>
+                  ) : (
+                    // CREATE MODE
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="col-span-2">
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <Type className="h-4 w-4 text-gray-400" />
+                            </div>
+                            <input
+                              type="text"
+                              placeholder="Promo Title (Required)"
+                              value={newPromoData.title}
+                              onChange={(e) =>
+                                setNewPromoData({
+                                  ...newPromoData,
+                                  title: e.target.value,
+                                })
+                              }
+                              className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                            />
+                          </div>
+                        </div>
+                        <div className="col-span-2">
+                          <div className="relative">
+                            <div className="absolute top-3 left-3 pointer-events-none">
+                              <FileText className="h-4 w-4 text-gray-400" />
+                            </div>
+                            <textarea
+                              placeholder="Promo Full Text (Optional)"
+                              rows={2}
+                              value={newPromoData.text}
+                              onChange={(e) =>
+                                setNewPromoData({
+                                  ...newPromoData,
+                                  text: e.target.value,
+                                })
+                              }
+                              className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm resize-none"
+                            />
+                          </div>
+                        </div>
+                        <div className="col-span-2">
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <ImageIcon className="h-4 w-4 text-gray-400" />
+                            </div>
+                            <input
+                              type="text"
+                              placeholder="Image Link URL (Optional)"
+                              value={newPromoData.image_link}
+                              onChange={(e) =>
+                                setNewPromoData({
+                                  ...newPromoData,
+                                  image_link: e.target.value,
+                                })
+                              }
+                              className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={handleCreatePromotion}
+                        disabled={isCreatingPromo || !newPromoData.title}
+                        className="w-full flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white py-2 rounded-lg transition-colors text-sm font-medium"
+                      >
+                        {isCreatingPromo ? (
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <>
+                            <Plus className="w-4 h-4" />
+                            <span>Create & Select Promotion</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
