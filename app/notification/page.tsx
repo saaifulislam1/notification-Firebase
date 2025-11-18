@@ -93,10 +93,30 @@ export default function NotificationPage() {
         console.error("Error fetching inbox:", error.message);
         toast.error("Failed to load notifications.");
       } else if (data) {
-        // == THIS IS THE FIX ==
-        // We use a double-cast (as unknown) to force TypeScript
-        // to accept our 'NotificationItem' type.
-        setItems(data as unknown as NotificationItem[]);
+        // == DATA FILTERING LOGIC START ==
+        const typedData = data as unknown as NotificationItem[];
+
+        const uniqueItems: NotificationItem[] = [];
+        const seenPromoIds = new Set<number>();
+
+        // Loop through data. Since it is ordered by newest first,
+        // we keep the first occurrence of a promotion_id and skip the rest.
+        for (const item of typedData) {
+          if (item.promotion_id) {
+            // If we haven't seen this promo ID yet, add it to the list
+            if (!seenPromoIds.has(item.promotion_id)) {
+              seenPromoIds.add(item.promotion_id);
+              uniqueItems.push(item);
+            }
+            // If we HAVE seen it, we do nothing (skipping the duplicate)
+          } else {
+            // Always include notifications that are NOT promotions (plain text)
+            uniqueItems.push(item);
+          }
+        }
+
+        setItems(uniqueItems);
+        // == DATA FILTERING LOGIC END ==
       }
       setLoading(false);
     };
