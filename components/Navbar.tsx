@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/authContext";
@@ -23,8 +23,13 @@ import {
 export default function Navbar() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
   const { user, logout, authLoading } = useAuth();
   const isAdmin = user?.email === "admin@example.com";
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   const allLinks = [
     {
@@ -61,6 +66,36 @@ export default function Navbar() {
   ];
 
   const visibleLinks = allLinks.filter((link) => link.visible);
+
+  if (!hasMounted) {
+    return (
+      <nav className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl shadow-sm supports-[backdrop-filter]:bg-white/65">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex h-20 items-center justify-between gap-6">
+            <div className="group flex items-center gap-3 rounded-full px-2 py-1">
+              <div className="relative flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 via-indigo-500 to-blue-500 text-white shadow-lg shadow-purple-500/25">
+                <Sparkles className="h-5 w-5" />
+                <span className="absolute inset-0 rounded-full border border-white/60 opacity-70" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs uppercase tracking-[0.4em] text-slate-500">
+                  Notify
+                </span>
+                <span className="text-xl font-semibold text-slate-900">
+                  MyApp
+                </span>
+              </div>
+            </div>
+            <div className="hidden flex-1 items-center justify-end gap-6 lg:flex">
+              <div className="h-10 w-64 rounded-full bg-slate-100/80 animate-pulse" />
+              <div className="h-12 w-48 rounded-full bg-slate-100/80 animate-pulse" />
+            </div>
+            <div className="lg:hidden h-12 w-12 rounded-full bg-slate-100/80 animate-pulse" />
+          </div>
+        </div>
+      </nav>
+    );
+  }
 
   return (
     <nav className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl shadow-sm supports-[backdrop-filter]:bg-white/65">
