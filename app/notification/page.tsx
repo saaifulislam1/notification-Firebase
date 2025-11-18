@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/authContext";
 import { supabase } from "@/lib/superbasePublic"; // Your public client
 import { useRouter } from "next/navigation";
 
-import { Loader2, Bell, ArrowUpRight } from "lucide-react"; // Icons for loading/empty
+import { Loader2, Bell } from "lucide-react"; // Icons for loading/empty
 import toast from "react-hot-toast"; // For error notifications
 
 // This type describes the data we get from our JOIN query
@@ -126,13 +126,6 @@ export default function NotificationPage() {
           </p>
           <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
             <h1 className="text-2xl font-bold text-slate-900">Notifications</h1>
-            <p className="text-sm text-slate-500">
-              {items.length > 0
-                ? `${items.length} unread update${
-                    items.length === 1 ? "" : "s"
-                  }`
-                : "All caught up ✨"}
-            </p>
           </div>
           <p className="mt-1 text-sm text-slate-500">
             See marketing pushes, product announcements, and alerts tailored for{" "}

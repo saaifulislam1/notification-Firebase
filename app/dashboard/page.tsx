@@ -46,9 +46,9 @@ export default function UsersPage() {
 
   // Redirect non-admins
   useEffect(() => {
-    // if (!user) {
-    //   router.replace("/");
-    // }
+    if (!user) {
+      router.replace("/");
+    }
     if (user && user.email !== "admin@example.com") {
       router.replace("/");
     }
