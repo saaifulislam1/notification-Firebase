@@ -38,7 +38,7 @@ export default function Navbar() {
       href: "/notification",
       label: "Notifications",
       icon: Bell,
-      visible: !!user,
+      visible: !!user && !isAdmin,
     },
     {
       href: "/admin-history",

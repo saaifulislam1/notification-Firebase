@@ -5,7 +5,6 @@ import { useAuth } from "@/lib/authContext";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState, useRef } from "react";
 import toast from "react-hot-toast";
-import { supabase } from "@/lib/superbasePublic";
 import {
   Plus,
   Edit3,
@@ -17,8 +16,6 @@ import {
   Camera,
   X,
 } from "lucide-react";
-
-import Image from "next/image";
 
 type Promotion = {
   id: number;
@@ -71,18 +68,23 @@ export default function PromotionsAdminPage() {
 
   const fetchPromotions = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("promotions")
-      .select("*")
-      .order("created_at", { ascending: false });
+    try {
+      const res = await fetch("/api/promotions", {
+        method: "GET",
+        cache: "no-store", // Ensure we don't get cached stale data
+      });
+      const data = await res.json();
 
-    if (error) {
-      toast.error(error.message || "Failed to fetch promotions.");
-    } else if (data && isMounted.current) {
-      setPromotions(data);
-    }
-    if (isMounted.current) {
-      setLoading(false);
+      if (data.success && isMounted.current) {
+        setPromotions(data.data);
+      } else if (!data.success && isMounted.current) {
+        toast.error("Failed to load promotions.");
+      }
+    } catch (err) {
+      console.error(err);
+      if (isMounted.current) toast.error("Network error fetching promotions.");
+    } finally {
+      if (isMounted.current) setLoading(false);
     }
   };
 
@@ -245,10 +247,9 @@ export default function PromotionsAdminPage() {
                     {promo.image_link && (
                       <div className="mb-4 rounded-xl overflow-hidden bg-gray-100 aspect-video flex items-center justify-center">
                         <img
-                          alt="Promotion image" // More descriptive alt text
+                          alt="Promotion image"
                           src={promo.image_link}
-                          className="w-full h-full object-cover" // Ensures image covers the container without distortion
-                          // No explicit width/height here; let the parent container (aspect-video) dictate it
+                          className="w-full h-full object-cover"
                         />
                       </div>
                     )}
