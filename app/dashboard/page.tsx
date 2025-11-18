@@ -291,28 +291,6 @@ export default function UsersPage() {
               </div>
             </div>
           </div>
-
-          {/* Stats Sidebar */}
-          {/* <div className="xl:col-span-1">
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Quick Stats
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-green-50 rounded-xl border border-green-200">
-                  <div>
-                    <p className="text-2xl font-bold text-green-900">
-                      {users.length}
-                    </p>
-                    <p className="text-sm text-green-700">Total Users</p>
-                  </div>
-                  <div className="p-3 bg-green-100 rounded-lg">
-                    <Users className="w-6 h-6 text-green-600" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div> */}
         </div>
 
         {/* User List Section */}

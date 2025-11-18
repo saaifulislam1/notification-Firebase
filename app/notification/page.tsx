@@ -1,13 +1,13 @@
-/* app/notification/page.tsx (Full, Corrected Code) */
+/* app/notification/page.tsx  */
 
 "use client";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/lib/authContext";
-import { supabase } from "@/lib/superbasePublic"; // Your public client
+import { supabase } from "@/lib/superbasePublic";
 import { useRouter } from "next/navigation";
 
-import { Loader2, Bell } from "lucide-react"; // Icons for loading/empty
-import toast from "react-hot-toast"; // For error notifications
+import { Loader2, Bell } from "lucide-react";
+import toast from "react-hot-toast";
 
 // This type describes the data we get from our JOIN query
 type NotificationItem = {

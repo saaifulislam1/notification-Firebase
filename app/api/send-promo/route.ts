@@ -2,7 +2,7 @@
 
 import { NextResponse } from "next/server";
 import { firebaseAdmin } from "@/lib/firebaseAdmin";
-import { getFcmTokens } from "@/lib/fcmTokens"; // Ensure this path is correct
+import { getFcmTokens } from "@/lib/fcmTokens";
 import { supabase } from "@/lib/supabaseAdmin";
 
 export async function POST(req: Request) {
