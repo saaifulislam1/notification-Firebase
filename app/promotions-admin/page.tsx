@@ -245,11 +245,10 @@ export default function PromotionsAdminPage() {
                     {promo.image_link && (
                       <div className="mb-4 rounded-xl overflow-hidden bg-gray-100 aspect-video flex items-center justify-center">
                         <img
-                          alt="img"
+                          alt="Promotion image" // More descriptive alt text
                           src={promo.image_link}
-                          className="w-[700px] h-[500px] bg-cover"
-                          //   width={48}
-                          //   height={48}
+                          className="w-full h-full object-cover" // Ensures image covers the container without distortion
+                          // No explicit width/height here; let the parent container (aspect-video) dictate it
                         />
                       </div>
                     )}
