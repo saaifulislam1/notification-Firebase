@@ -1,7 +1,7 @@
 /* app/api/promotions/route.ts (NEW FILE) */
 
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabaseAdmin"; // Use the secure admin client
+import { supabase } from "@/lib/supabaseAdmin";
 
 export async function GET() {
   try {
@@ -39,8 +39,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // == THIS IS THE FIX ==
-    // We remove .single() and check the data array, just like we did for PUT.
     const { data, error } = await supabase
       .from("promotions")
       .insert({

@@ -22,7 +22,6 @@ export default function UsersPage() {
   const { user } = useAuth();
   const router = useRouter();
 
-  // States
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [users, setUsers] = useState<any[]>([]);
   const [singleLoading, setSingleLoading] = useState<string | null>(null);
@@ -35,12 +34,12 @@ export default function UsersPage() {
   );
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [selectedPromoId, setSelectedPromoId] = useState<string>("");
-  console.log(selectedPromoId, "selectedPromoId");
+
   const isMounted = useRef(false);
   useEffect(() => {
     isMounted.current = true;
     return () => {
-      isMounted.current = false; // Set to false when component unmounts
+      isMounted.current = false;
     };
   }, []); // Empty array means this runs once on mount and once on unmount
 
@@ -98,8 +97,8 @@ export default function UsersPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
-          title: messageTitle, // Use state title
-          body: messageBody, // Use state body with name replaced
+          title: messageTitle,
+          body: messageBody,
           selectedPromoId,
         }),
       });
@@ -123,9 +122,7 @@ export default function UsersPage() {
   const sendPromoToAll = async () => {
     setAllLoading(true);
 
-    // Use a generic fallback for {name} in case it's in the template
     const messageTitle = title;
-    // const messageBody = body.replace("{name}", "there");
 
     try {
       const res = await fetch("/api/send-promo-all", {
