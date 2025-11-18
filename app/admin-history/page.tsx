@@ -34,12 +34,18 @@ const formatTime = (dateString: string) => {
 };
 
 export default function AdminHistoryPage() {
-  const { user } = useAuth();
+  const { user, authLoading } = useAuth();
   const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!user) {
+      router.replace("/");
+      return;
+    }
     if (user && user.email !== "admin@example.com") {
       router.replace("/");
     }

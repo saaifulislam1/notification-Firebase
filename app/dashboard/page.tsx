@@ -27,7 +27,7 @@ type Promotion = {
 };
 
 export default function UsersPage() {
-  const { user } = useAuth();
+  const { user, authLoading } = useAuth();
   const router = useRouter();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -64,14 +64,19 @@ export default function UsersPage() {
 
   // Redirect non-admins
   useEffect(() => {
+    // If auth is still loading, DO NOT do anything yet.
+    if (authLoading) return;
+
     if (!user) {
       router.replace("/");
+      return;
     }
     if (user && user.email !== "admin@example.com") {
       router.replace("/");
     }
   }, [user, router]);
 
+  // Fetch users and promotions
   // Fetch users and promotions
   useEffect(() => {
     if (user) {
@@ -85,19 +90,28 @@ export default function UsersPage() {
         })
         .catch((err) => console.error(err));
 
-      // Fetch Promotions
+      // Fetch Promotions (FIXED LOGIC)
       const fetchPromotions = async () => {
         try {
           const res = await fetch("/api/promotions");
           const data = await res.json();
 
-          if (data.success && isMounted.current) {
+          // 1. Check if API failed logically
+          if (!data.success) {
+            if (isMounted.current) {
+              toast.error(data.error || "Failed to fetch promotions.");
+            }
+            return;
+          }
+
+          // 2. If success, only update state if mounted
+          if (isMounted.current) {
             setPromotions(data.data);
-          } else {
-            toast.error(data.error || "Failed to fetch promotions.");
           }
         } catch (err) {
-          toast.error("An error occurred fetching promotions.");
+          if (isMounted.current) {
+            toast.error("An error occurred fetching promotions.");
+          }
         }
       };
       fetchPromotions();
@@ -222,34 +236,35 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-6 sm:py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div className="flex items-center space-x-4">
-              <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg">
+              <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg flex-shrink-0">
                 <Bell className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">
-                  FCM Users Dashboard
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                  FCM Dashboard
                 </h1>
-                <p className="text-gray-600 mt-1">
-                  Manage and send notifications to your users
+                <p className="text-sm sm:text-base text-gray-600 mt-1">
+                  Manage and send notifications
                 </p>
               </div>
             </div>
 
+            {/* Send All Button - Full width on mobile */}
             <button
               onClick={sendPromoToAll}
               disabled={allLoading || users.length === 0 || !!singleLoading}
-              className="flex items-center justify-center space-x-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-3 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed font-semibold"
+              className="w-full lg:w-auto flex items-center justify-center space-x-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-3 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 disabled:scale-100 disabled:cursor-not-allowed font-semibold"
             >
               {allLoading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Sending to All...</span>
+                  <span>Sending...</span>
                 </>
               ) : (
                 <>
@@ -261,19 +276,19 @@ export default function UsersPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8">
           {/* Notification Form Section */}
           <div className="xl:col-span-2">
             <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
-                <h2 className="text-xl font-bold text-gray-900 flex items-center space-x-3">
-                  <Edit3 className="w-6 h-6 text-blue-600" />
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center space-x-3">
+                  <Edit3 className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                   <span>Notification Content</span>
                 </h2>
               </div>
-              <div className="p-6 space-y-6">
+              <div className="p-4 sm:p-6 space-y-6">
                 {/* Notification Title & Body */}
-                <div className="grid grid-cols-1 gap-6">
+                <div className="grid grid-cols-1 gap-5">
                   <div>
                     <label
                       htmlFor="title"
@@ -307,8 +322,8 @@ export default function UsersPage() {
                       placeholder="Enter your notification message..."
                       disabled={allLoading || !!singleLoading}
                     />
-                    <div className="mt-2 flex items-center space-x-2 text-xs text-blue-600">
-                      <AlertCircle className="w-3 h-3" />
+                    <div className="mt-2 flex items-start sm:items-center space-x-2 text-xs text-blue-600">
+                      <AlertCircle className="w-3 h-3 mt-0.5 sm:mt-0 flex-shrink-0" />
                       <span>
                         Use <code>{"{name}"}</code> for the users name
                       </span>
@@ -320,17 +335,17 @@ export default function UsersPage() {
 
                 {/* --- PROMOTION SECTION --- */}
                 <div>
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
                     <label className="block text-sm font-semibold text-gray-900 flex items-center space-x-2">
                       <Megaphone className="w-5 h-5 text-green-600" />
                       <span>Promotion Data</span>
                     </label>
 
-                    {/* Toggle Switch */}
-                    <div className="flex bg-gray-100 p-1 rounded-lg">
+                    {/* Toggle Switch - Full width on mobile */}
+                    <div className="flex bg-gray-100 p-1 rounded-lg w-full sm:w-auto">
                       <button
                         onClick={() => setPromoMode("select")}
-                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
+                        className={`flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
                           promoMode === "select"
                             ? "bg-white text-gray-900 shadow-sm"
                             : "text-gray-500 hover:text-gray-700"
@@ -340,7 +355,7 @@ export default function UsersPage() {
                       </button>
                       <button
                         onClick={() => setPromoMode("create")}
-                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
+                        className={`flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
                           promoMode === "create"
                             ? "bg-white text-blue-600 shadow-sm"
                             : "text-gray-500 hover:text-gray-700"
@@ -460,25 +475,25 @@ export default function UsersPage() {
 
         {/* User List Section */}
         <div className="mt-8 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-          <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900 flex items-center space-x-3">
-              <List className="w-6 h-6 text-gray-700" />
+          <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center space-x-3">
+              <List className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
               <span>User List</span>
-              <span className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
-                {users.length} users
-              </span>
             </h2>
+            <span className="bg-blue-100 text-blue-800 text-xs sm:text-sm font-medium px-3 py-1 rounded-full">
+              {users.length} users
+            </span>
           </div>
 
           {users.length === 0 ? (
-            <div className="text-center py-12">
+            <div className="text-center py-12 px-4">
               <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Users className="w-10 h-10 text-gray-400" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 No Users Found
               </h3>
-              <p className="text-gray-600 max-w-sm mx-auto">
+              <p className="text-gray-600 max-w-sm mx-auto text-sm sm:text-base">
                 No users with active notifications are currently registered in
                 the system.
               </p>
@@ -488,37 +503,39 @@ export default function UsersPage() {
               {users.map((u) => (
                 <div
                   key={u.email}
-                  className="flex flex-col lg:flex-row lg:items-center lg:justify-between p-6 hover:bg-gray-50 transition-all duration-200 group"
+                  // Mobile: Column layout, Desktop: Row layout
+                  className="flex flex-col lg:flex-row lg:items-center lg:justify-between p-4 sm:p-6 hover:bg-gray-50 transition-all duration-200 group"
                 >
                   <div className="flex-1 min-w-0 mb-4 lg:mb-0">
                     <div className="flex items-center space-x-3 mb-2">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
                         <span className="text-white font-semibold text-sm">
                           {u.name
                             ? u.name.charAt(0).toUpperCase()
                             : u.email.charAt(0).toUpperCase()}
                         </span>
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className="font-semibold text-gray-900 truncate">
                           {u.name || "No Name"}
                         </p>
-                        <p className="text-sm text-gray-500 truncate">
+                        <p className="text-sm text-gray-500 truncate block">
                           {u.email}
                         </p>
                       </div>
                     </div>
                     {u.fcm_token && (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 ml-12 sm:ml-12 lg:ml-0">
                         Active FCM
                       </span>
                     )}
                   </div>
 
+                  {/* Full width button on mobile */}
                   <button
                     onClick={() => sendPromo(u.email, u.name)}
                     disabled={allLoading || !!singleLoading}
-                    className="flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-3 rounded-xl shadow-sm transition-all duration-300 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed font-medium min-w-[140px]"
+                    className="w-full lg:w-auto flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-3 rounded-xl shadow-sm transition-all duration-300 transform hover:scale-105 active:scale-95 disabled:scale-100 disabled:cursor-not-allowed font-medium min-w-[140px]"
                   >
                     {singleLoading === u.email ? (
                       <>

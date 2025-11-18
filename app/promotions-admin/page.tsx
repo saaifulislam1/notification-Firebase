@@ -38,7 +38,7 @@ const newPromotionForm: PromotionFormData = {
 };
 
 export default function PromotionsAdminPage() {
-  const { user } = useAuth();
+  const { user, authLoading } = useAuth();
   const router = useRouter();
 
   const [promotions, setPromotions] = useState<Promotion[]>([]);
@@ -58,6 +58,12 @@ export default function PromotionsAdminPage() {
 
   // Auth & Data Fetching
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!user) {
+      router.replace("/");
+      return;
+    }
     if (user && user.email !== "admin@example.com") {
       router.replace("/shop");
     }
