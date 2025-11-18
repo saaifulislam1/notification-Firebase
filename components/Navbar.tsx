@@ -176,8 +176,12 @@ export default function Navbar() {
       {/* Mobile Menu */}
       <div
         className={`
-          lg:hidden border-t border-slate-200/70 bg-white/85 backdrop-blur-xl shadow-lg shadow-slate-500/5 transition-all duration-500 ease-in-out
-          ${menuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}
+          lg:hidden overflow-hidden border-t border-slate-200/70 bg-white/85 backdrop-blur-xl shadow-lg shadow-slate-500/5 transition-all duration-500 ease-in-out
+          ${
+            menuOpen
+              ? "max-h-96 opacity-100 pointer-events-auto"
+              : "max-h-0 opacity-0 pointer-events-none"
+          }
         `}
       >
         <div className="flex flex-col px-4 pt-3 pb-6">
