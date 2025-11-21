@@ -5,7 +5,6 @@ import { useAuth } from "@/lib/authContext";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState, useRef } from "react";
 import toast from "react-hot-toast";
-import { supabase } from "@/lib/superbasePublic";
 import {
   Plus,
   Edit3,
@@ -17,8 +16,6 @@ import {
   Camera,
   X,
 } from "lucide-react";
-
-import Image from "next/image";
 
 type Promotion = {
   id: number;
@@ -41,7 +38,7 @@ const newPromotionForm: PromotionFormData = {
 };
 
 export default function PromotionsAdminPage() {
-  const { user } = useAuth();
+  const { user, authLoading } = useAuth();
   const router = useRouter();
 
   const [promotions, setPromotions] = useState<Promotion[]>([]);
@@ -61,6 +58,12 @@ export default function PromotionsAdminPage() {
 
   // Auth & Data Fetching
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!user) {
+      router.replace("/");
+      return;
+    }
     if (user && user.email !== "admin@example.com") {
       router.replace("/shop");
     }
@@ -71,18 +74,23 @@ export default function PromotionsAdminPage() {
 
   const fetchPromotions = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("promotions")
-      .select("*")
-      .order("created_at", { ascending: false });
+    try {
+      const res = await fetch("/api/promotions", {
+        method: "GET",
+        cache: "no-store", // Ensure we don't get cached stale data
+      });
+      const data = await res.json();
 
-    if (error) {
-      toast.error(error.message || "Failed to fetch promotions.");
-    } else if (data && isMounted.current) {
-      setPromotions(data);
-    }
-    if (isMounted.current) {
-      setLoading(false);
+      if (data.success && isMounted.current) {
+        setPromotions(data.data);
+      } else if (!data.success && isMounted.current) {
+        toast.error("Failed to load promotions.");
+      }
+    } catch (err) {
+      console.error(err);
+      if (isMounted.current) toast.error("Network error fetching promotions.");
+    } finally {
+      if (isMounted.current) setLoading(false);
     }
   };
 
@@ -245,11 +253,9 @@ export default function PromotionsAdminPage() {
                     {promo.image_link && (
                       <div className="mb-4 rounded-xl overflow-hidden bg-gray-100 aspect-video flex items-center justify-center">
                         <img
-                          alt="img"
+                          alt="Promotion image"
                           src={promo.image_link}
-                          className="w-[700px] h-[500px] bg-cover"
-                          //   width={48}
-                          //   height={48}
+                          className="w-full h-full object-cover"
                         />
                       </div>
                     )}
