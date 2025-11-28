@@ -1,10 +1,8 @@
 /* app/api/promotions/[id]/route.ts (Fixed) */
 
 import { NextRequest, NextResponse } from "next/server";
-// Use your admin client (name can be supabase or supabaseAdmin, just be consistent)
 import { supabase } from "@/lib/supabaseAdmin";
 
-// --- Helpers ---
 function parseId(id: string): number | null {
   const parsedId = parseInt(id, 10);
   return Number.isNaN(parsedId) ? null : parsedId;
