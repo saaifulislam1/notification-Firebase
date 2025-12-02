@@ -2,18 +2,25 @@
 
 import { NextResponse } from "next/server";
 import { firebaseAdmin } from "@/lib/firebaseAdmin";
-import { getFcmTokens } from "@/lib/fcmTokens"; // Ensure this path is correct
+import { getFcmTokens } from "@/lib/fcmTokens";
 import { supabase } from "@/lib/supabaseAdmin";
 
 export async function POST(req: Request) {
   try {
-    const { email, title, body, url = "/notification" } = await req.json();
+    const {
+      email,
+      title,
+      body,
+      selectedPromoId,
+      url = "/notification",
+    } = await req.json();
 
     const { error: logError } = await supabase.from("notifications").insert({
       user_email: email,
       title: title,
       body: body,
       url: url,
+      promotion_id: selectedPromoId,
     });
 
     if (logError) {
