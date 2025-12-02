@@ -77,7 +77,7 @@ export default function UsersPage() {
   }, [user, router]);
 
   // Fetch users and promotions
-  // Fetch users and promotions
+
   useEffect(() => {
     if (user) {
       // Fetch Users
