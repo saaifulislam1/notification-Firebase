@@ -264,7 +264,7 @@ export default function PromotionsAdminPage() {
                       <h3 className="font-bold text-gray-900 text-lg mb-2 line-clamp-2">
                         {promo.title}
                       </h3>
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                      <p className="text-gray-600 text-sm mb-4  whitespace-pre-line">
                         {promo.text || "No description provided"}
                       </p>
                     </div>
