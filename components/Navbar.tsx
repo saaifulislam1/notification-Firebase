@@ -18,6 +18,7 @@ import {
   Sparkles,
   History,
   BookText,
+  Phone,
 } from "lucide-react";
 
 export default function Navbar() {
@@ -32,6 +33,18 @@ export default function Navbar() {
   }, []);
 
   const allLinks = [
+    {
+      href: "/about-2",
+      label: "About",
+      icon: Sparkles,
+      visible: true,
+    },
+    {
+      href: "/contact-2",
+      label: "Contact",
+      icon: Phone,
+      visible: true,
+    },
     {
       href: "/shop",
       label: "Shop",
