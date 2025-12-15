@@ -1,7 +1,7 @@
-/* app/api/promotions/route.ts (NEW FILE) */
+/* app/api/promotions/route.ts */
 
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabaseAdmin"; // Use the secure admin client
+import { supabase } from "@/lib/supabaseAdmin";
 
 export async function GET() {
   try {
@@ -11,17 +11,18 @@ export async function GET() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      throw error;
+      console.error("Supabase GET Error:", error); // FULL error
+      return NextResponse.json(
+        { success: false, error: error.message, details: error },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ success: true, data });
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "An unknown error occurred";
-    // == ADDED LOGGING ==
-    console.error("GET /api/promotions Error:", errorMessage);
+    console.error("GET /api/promotions Error:", error); // FULL error
     return NextResponse.json(
-      { success: false, error: errorMessage },
+      { success: false, error: String(error) },
       { status: 500 }
     );
   }
@@ -39,37 +40,38 @@ export async function POST(req: Request) {
       );
     }
 
-    // == THIS IS THE FIX ==
-    // We remove .single() and check the data array, just like we did for PUT.
     const { data, error } = await supabase
       .from("promotions")
-      .insert({
-        title,
-        text,
-        image_link,
-      })
-      .select(); // <-- .single() is removed
+      .insert({ title, text, image_link })
+      .select();
 
     if (error) {
-      // This will catch DB-level errors (like RLS)
-      throw "something wenttttt";
+      // PRINT the entire supabase error
+      console.error("Supabase INSERT Error:", error);
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: error.message,
+          details: error, // Shows full supabase error in browser
+        },
+        { status: 500 }
+      );
     }
 
-    // Check if the insert actually returned the new row
     if (!data || data.length === 0) {
-      throw new Error("Failed to create promotion, no data returned.");
+      throw new Error("Insert succeeded but no data returned.");
     }
 
-    // Success! Return the new object.
     return NextResponse.json({ success: true, data: data[0] });
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "An unknown error occurred";
-    // == ADDED LOGGING ==
-    // This will print the *real* error to your terminal.
-    console.error("POST /api/promotions Error:", errorMessage);
+    console.error("POST /api/promotions Error:", error); // FULL error
     return NextResponse.json(
-      { success: false, error: errorMessage },
+      {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        details: error, // Send full error to browser
+      },
       { status: 500 }
     );
   }
