@@ -44,6 +44,9 @@ export default function UsersPage() {
   // --- Promotions State ---
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [selectedPromoId, setSelectedPromoId] = useState<string>("");
+  const selectedPromotion = promotions.find(
+    (promo) => promo.id.toString() === selectedPromoId
+  );
 
   // --- NEW: Create Promotion State ---
   const [promoMode, setPromoMode] = useState<"select" | "create">("select");
@@ -387,6 +390,58 @@ export default function UsersPage() {
                         This links a database record to your notification so the
                         app can show full details when opened.
                       </p>
+                      <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                        <div className="mb-3 flex items-center justify-between">
+                          <div className="flex items-center space-x-2 text-sm font-semibold text-gray-700">
+                            <Megaphone className="h-4 w-4 text-green-600" />
+                            <span>Promotion Preview</span>
+                          </div>
+                          {selectedPromotion && (
+                            <span className="text-xs text-gray-400">
+                              ID #{selectedPromotion.id}
+                            </span>
+                          )}
+                        </div>
+                        {selectedPromotion ? (
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {selectedPromotion.title}
+                              </p>
+                              {selectedPromotion.text ? (
+                                <p className="mt-1 whitespace-pre-line text-sm text-gray-600">
+                                  {selectedPromotion.text}
+                                </p>
+                              ) : (
+                                <p className="mt-1 text-xs text-gray-500">
+                                  No description provided.
+                                </p>
+                              )}
+                            </div>
+                            {selectedPromotion.image_link ? (
+                              <div className="rounded-lg border border-gray-200 bg-white p-2">
+                                <img
+                                  src={selectedPromotion.image_link}
+                                  alt={`${selectedPromotion.title} preview`}
+                                  className="max-h-56 w-full rounded-md object-cover"
+                                />
+                                <p className="mt-2 break-all text-xs text-gray-500">
+                                  {selectedPromotion.image_link}
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="flex items-center space-x-2 text-xs text-gray-500">
+                                <ImageIcon className="h-4 w-4" />
+                                <span>No image link provided.</span>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500">
+                            Select a promotion to preview its content.
+                          </p>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     // CREATE MODE
